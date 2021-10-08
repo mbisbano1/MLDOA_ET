@@ -25,7 +25,7 @@ StbdAmp = NaN(5000,5000) ;
 StbdMaxSound = -1 ;
 pingctr = 1;
 loopctr = 1;
-numsamples = 0 ;
+
 while PoBathyCtr < 100
     [mH, data, header] = readJSFv3_small(fp, [1:100]) ; % read all types of data
     
@@ -64,7 +64,7 @@ while PoBathyCtr < 100
             stavePort = data.samples(1:10,:) ; % stave order: stave 1 closest to seabed stave 10 closest to surface
             staveStarboard = data.samples(11:20,:) ; % % stave order: stave 11 closest to seabed stave 20 closest to surface
             timestamp = header.timeStamp ;
-            numsamples = header.samples + numsamples ;
+            numsamples = header.
             fs = header.fs ;
             sampInt = header.sampleInterval ;
             sampIntFrac = header.addSampleInterval ;
