@@ -291,8 +291,87 @@ fprintf('\nBathy Data Processed\n');
 
 
 %% Format all this information into OutMat
+% Data Formatting
 
+% Sample Delay Column
+fs=Measurements.MeasurementData(1,1, 1, 6);     % Sample Frequency taken from MeasurementData
+SDA = zeros(Pings.NumSamples(1));               % Array to allocate Sample Delay Info
+for p = 1:length(Pings.PingTimeStamps) % the amount of pings we need data from
+        sdr = 0:1/fs:(Pings.NumSamples(p)-1)/fs; %double(Pings.PingTimeStamps(p):1/fs:(Pings.PingTimeStamps(p) + ((Pings.NumSamples(p)-1)/fs))); % row vector for sample delay of ping p
+        SDA(:,p) = sdr(1,:)'; % array with all time delays. Column i corresponds to ping i
+        %vp = vpa(TSC);
+end
 
+% Bring Formatted Data into OutMat
+row=1; % Instantiation of a row. Keeps track of which row in OutMat the system is currently on
+%for i = 1:length(Pings.PingTimeStamps) % total iterations needed for each ping in a .jsf
+for j = 1:MaxPingCtr
+    for k = 1:Pings.NumSamples(j)
+     
+        OutMat(row,1) = j;    % Ping Number Column. Is adjusted directly by MaxPingCtr
+        %pNum=pNum+1;
+        
+        OutMat(row,2) = k;    % Sample Number Column
+        %sNum=sNum+1;
+        
+        OutMat(row,3) = 0;    % Port/Stbd. This OutMat array is only for port side. For stbd, change 0->1. New OutMat will be generated later.
+        
+        OutMat(row,4) = SDA(k,j); % Sample Delay data brought into OutMat
+        %sDelay = sDelay + 1;
+        
+        % EX. d = Ping 3, Stbd Channel 9, Sample 206, Data: 
+        %   d = Pings.StaveData(3, 19, 206, 2) ;
+        %OutMat(row,5) = real(Pings.StaveData(j, 1, k, 2));
+        %OutMat(row,6) = imag(Pings.StaveData(j, 1, k, 2));
+        
+        %OutMat(row,7) = real(Pings.StaveData(j, 2, k, 2));
+        %OutMat(row,8) = imag(Pings.StaveData(j, 2, k, 2));
+        
+        %OutMat(row,9) = real(Pings.StaveData(j, 3, k, 2));
+        %OutMat(row,10) = imag(Pings.StaveData(j, 3, k, 2));
+        
+        %OutMat(row,11) = real(Pings.StaveData(j, 4, k, 2));
+        %OutMat(row,12) = imag(Pings.StaveData(j, 4, k, 2));
+        
+        %OutMat(row,13) = real(Pings.StaveData(j, 5, k, 2));
+        %OutMat(row,14) = imag(Pings.StaveData(j, 5, k, 2));
+        
+        %OutMat(row,15) = real(Pings.StaveData(j, 6, k, 2));
+        %OutMat(row,16) = imag(Pings.StaveData(j, 6, k, 2));
+        
+        %OutMat(row,17) = real(Pings.StaveData(j, 7, k, 2));
+        %OutMat(row,18) = imag(Pings.StaveData(j, 7, k, 2));
+        
+        %OutMat(row,19) = real(Pings.StaveData(j, 8, k, 2));
+        %OutMat(row,20) = imag(Pings.StaveData(j, 8, k, 2));
+        
+        %OutMat(row,21) = real(Pings.StaveData(j, 9, k, 2));
+        %OutMat(row,22) = imag(Pings.StaveData(j, 9, k, 2));
+        
+        %OutMat(row,23) = real(Pings.StaveData(j, 10, k, 2));
+        %OutMat(row,24) = imag(Pings.StaveData(j, 10, k, 2));
+        
+        chanI = 1;  % Variable to keep track of Port side I and Q channel (I)
+        chanQ = 1;  % Variable to keep track of Port side I and Q channel (Q)
+        for c=5:24 % Columns for I and Q channel Data
+           if (mod(c,2)==1)  % odd columns recieve the real part of I and Q data (I)
+               OutMat(row,c) = real(Pings.StaveData(j,chanI,k,2)); % real I and Q data brought into OutMat
+               chanI = chanI + 1;
+           else             % even columns receive the imaginary part of I and Q Data (Q)
+               OutMat(row,c) = imag(Pings.StaveData(j,chanQ,k,2)); % Imaginary I and Q data brought into OutMat
+               chanQ = chanQ + 1;
+           end
+        end
+        
+        
+        
+        row=row+1;
+ 
+   end
+end
+
+%end
+msgbox('Hey dont forget to change the ping numbers!')
 fprintf('Sonar Data merged into output matrix. \n')
 
 %% Write Output CSV File
@@ -305,7 +384,7 @@ fprintf('Sonar Data merged into output matrix. \n')
 
 % Replace A with actual CSV output data!
 %A = ones(4);
-fprintf('Writing Output Matrix into CSV. Be Patient! \n')
-writematrix(OutMat, CSVfilenamePort);
-message = strcat('CSV File Written to:   ',' ', ' "', CSVfilenamePort, '"');
-msgbox(message);
+%fprintf('Writing Output Matrix into CSV. Be Patient! \n')
+%writematrix(OutMat, CSVfilenamePort);
+%message = strcat('CSV File Written to:   ',' ', ' "', CSVfilenamePort, '"');
+%msgbox(message);
