@@ -296,6 +296,7 @@ fprintf('\nBathy Data Processed\n');
 % Sample Delay Column
 fs=Measurements.MeasurementData(1,1, 1, 6);     % Sample Frequency taken from MeasurementData
 SDA = zeros(Pings.NumSamples(1));               % Array to allocate Sample Delay Info
+TSA = zeros(Pings.NumSamples(1));                % Array to allocate Time Stamps. Used for comparing timings for roll and Sound Speed Data
 for p = 1:length(Pings.PingTimeStamps) % the amount of pings we need data from
         sdr = 0:1/fs:(Pings.NumSamples(p)-1)/fs; %double(Pings.PingTimeStamps(p):1/fs:(Pings.PingTimeStamps(p) + ((Pings.NumSamples(p)-1)/fs))); % row vector for sample delay of ping p
         SDA(:,p) = sdr(1,:)'; % array with all time delays. Column i corresponds to ping i
@@ -304,6 +305,10 @@ end
 
 % Bring Formatted Data into OutMat
 row=1; % Instantiation of a row. Keeps track of which row in OutMat the system is currently on
+b=1;
+s=1;
+rollTime=1;
+SoundTime=1;
 %for i = 1:length(Pings.PingTimeStamps) % total iterations needed for each ping in a .jsf
 for j = 1:MaxPingCtr
     for k = 1:Pings.NumSamples(j)
@@ -362,12 +367,38 @@ for j = 1:MaxPingCtr
                chanQ = chanQ + 1;
            end
         end
+        % Next bit is for Roll and Sound Speed Column
+        tsr = Pings.PingTimeStamps(j):1/fs:(Pings.PingTimeStamps(j) + ((Pings.NumSamples(j)-1)/fs));    % Row array of time stamps for each ping
+        TSA = tsr' ;            % Row array is converted to column array for easy comparison between time stamps of roll and sound speed
         
+        % Roll
+        if (TSA(k)<= Rolls(b,1))                 % If Ping Time Stamp is less than that of the current roll time
+            OutMat(row,25) = Rolls(b,2);                % That current roll data is sent to that row of OutMat
+
+        else                % ELSE 
+            b=b+1;                 % increase roll row by 1   
+            if  b>RollCnt-1     % check if row does not excede valid daily
+                b=RollCnt-1;
+            end
+            OutMat(row,25) = Rolls(b,2);  % New role data is sent to that current row of OutMat
+               
+        end
         
-        
+        % Sound Speed
+        if (TSA(k)<= SoundSpeeds(SoundTime,1))      % same exact structure as Roll column
+            OutMat(row,26) = SoundSpeeds(s,2);
+
+        else
+            s=s+1;
+            if  s>SoundCnt-1
+                s=SoundCnt-1;
+            end
+            OutMat(row,26) = SoundSpeeds(s,2);
+               
+        end
         row=row+1;
  
-   end
+    end
 end
 
 %end
