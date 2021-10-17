@@ -1,3 +1,4 @@
+format long ;
 clear variables ;
 close all ;
 clc       ;
@@ -34,7 +35,7 @@ CSVfilenameStbd = fullfile(CSVfpath, CSVfileStbd);
 %numChannelsPerSample = 20
 %OutMat = uint32(NaN(1000*4340*20, 15));
 OutMat = -69.*ones(1287*4340, 32);
-
+%OutMat = -69.*ones(11*4340, 32);
 
 
 %% Message List Declaration
@@ -75,7 +76,7 @@ OutMat = -69.*ones(1287*4340, 32);
 
     SamplesPerPing = 4340 ;     % 4340 samples per ping (IN FIRST TEST FILE)
     PingCtr = 1 ;
-    MaxPingCtr = 10 ;
+    MaxPingCtr = 1287 ;
     NumChannelsPerSample = 20 ; %[1,2, ... 10] Port ||| [11, 12, ... 20] Stbd
                                     % 1 and 11 being the closest to seabed
 
@@ -372,22 +373,26 @@ for j = 1:MaxPingCtr
         TSA = tsr' ;            % Row array is converted to column array for easy comparison between time stamps of roll and sound speed
         
         % Roll
-        if (TSA(k)<= Rolls(b,1))                 % If Ping Time Stamp is less than that of the current roll time
+        if ((TSA(k)>= Rolls(b,1))&&(TSA(k) < Rolls(b+1, 1)))                 % If Ping Time Stamp is less than that of the current roll time
             OutMat(row,25) = Rolls(b,2);                % That current roll data is sent to that row of OutMat
-
+        
+        elseif (TSA(k) < Rolls(b,1))
+            OutMat(row,25) = NaN ;
+            
         else                % ELSE 
             b=b+1;                 % increase roll row by 1   
-            if  b>RollCnt-1     % check if row does not excede valid daily
+            if  b>RollCnt-1     % check if row does not excede valid data
                 b=RollCnt-1;
             end
-            OutMat(row,25) = Rolls(b,2);  % New role data is sent to that current row of OutMat
+            OutMat(row,25) = Rolls(b, 2); %Rolls(b,2);  % New role data is sent to that current row of OutMat
                
         end
         
         % Sound Speed
-        if (TSA(k)<= SoundSpeeds(SoundTime,1))      % same exact structure as Roll column
+        if ((TSA(k)>= SoundSpeeds(s,1)&&(TSA(k) < SoundSpeeds(s+1, 1))))      % same exact structure as Roll column
             OutMat(row,26) = SoundSpeeds(s,2);
-
+        elseif (TSA(k) < SoundSpeeds(s,1))
+            OutMat(row,26) = NaN ;
         else
             s=s+1;
             if  s>SoundCnt-1
@@ -415,7 +420,7 @@ fprintf('Sonar Data merged into output matrix. \n')
 
 % Replace A with actual CSV output data!
 %A = ones(4);
-%fprintf('Writing Output Matrix into CSV. Be Patient! \n')
-%writematrix(OutMat, CSVfilenamePort);
-%message = strcat('CSV File Written to:   ',' ', ' "', CSVfilenamePort, '"');
-%msgbox(message);
+fprintf('Writing Output Matrix into CSV. Be Patient! \n')
+writematrix(OutMat, CSVfilenamePort);
+message = strcat('CSV File Written to:   ',' ', ' "', CSVfilenamePort, '"');
+msgbox(message);
