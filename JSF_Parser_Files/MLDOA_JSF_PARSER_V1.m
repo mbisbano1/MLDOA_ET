@@ -4,8 +4,9 @@ close all ;
 clc       ;
 %% Path Setup and File Open
 [JSFfpath, CSVfpath] = MB_FPATH_SET();
-%fpath = RF_FPATH_SET();
-%fpath = DL_FPATH_SET();
+%[JSFfpath, CSVfpath] = RF_FPATH_SET();
+%[JSFfpath, CSVfpath] = DL_FPATH_SET();
+
 
 try
     [JSFfilename,JSFfpath]=uigetfile([JSFfpath '/*.jsf'], 'Which file to process for Stave Data?'); %open file and assign handle
