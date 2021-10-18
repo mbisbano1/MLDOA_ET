@@ -35,8 +35,8 @@ CSVfilenameStbd = fullfile(CSVfpath, CSVfileStbd);
 %numSamplesPerPing = 4340
 %numChannelsPerSample = 20
 %OutMat = uint32(NaN(1000*4340*20, 15));
-OutMat = -69.*ones(1287*4340, 32);
-%OutMat = -69.*ones(11*4340, 32);
+%OutMat = -69.*ones(1287*4340, 32);
+OutMat = -69.*ones(11*4340, 32);
 
 
 %% Message List Declaration
@@ -77,7 +77,7 @@ OutMat = -69.*ones(1287*4340, 32);
 
     SamplesPerPing = 4340 ;     % 4340 samples per ping (IN FIRST TEST FILE)
     PingCtr = 1 ;
-    MaxPingCtr = 1287 ;
+    MaxPingCtr = 10 ;
     NumChannelsPerSample = 20 ; %[1,2, ... 10] Port ||| [11, 12, ... 20] Stbd
                                     % 1 and 11 being the closest to seabed
 
@@ -392,7 +392,7 @@ for CurrentPing = 1:MaxPingCtr
         end
         
         % Sound Speed
-        if ((TSA(CurrentSample,1)>= SoundSpeeds(s,1)&&(TSA(k,1) < SoundSpeeds(s+1, 1))))      % same exact structure as Roll column
+        if ((TSA(CurrentSample,1)>= SoundSpeeds(s,1)&&(TSA(CurrentSample,1) < SoundSpeeds(s+1, 1))))      % same exact structure as Roll column
             OutMat(row,26) = SoundSpeeds(s,2);
         elseif (TSA(CurrentSample,1) < SoundSpeeds(s,1))
             OutMat(row,26) = NaN ;
@@ -423,7 +423,7 @@ fprintf('Sonar Data merged into output matrix. \n')
 
 % Replace A with actual CSV output data!
 %A = ones(4);
-fprintf('Writing Output Matrix into CSV. Be Patient! \n')
-writematrix(OutMat, CSVfilenamePort);
-message = strcat('CSV File Written to:   ',' ', ' "', CSVfilenamePort, '"');
-msgbox(message);
+%fprintf('Writing Output Matrix into CSV. Be Patient! \n')
+%writematrix(OutMat, CSVfilenamePort);
+%message = strcat('CSV File Written to:   ',' ', ' "', CSVfilenamePort, '"');
+%msgbox(message);
