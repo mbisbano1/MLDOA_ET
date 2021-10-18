@@ -297,8 +297,8 @@ fprintf('\nBathy Data Processed\n');
 
 % Sample Delay Column
 fs=Measurements.MeasurementData(1,1, 1, 6);     % Sample Frequency taken from MeasurementData
-SDA = zeros(Pings.NumSamples(1));               % Array to allocate Sample Delay Info
-TSA = zeros(Pings.NumSamples(1));                % Array to allocate Time Stamps. Used for comparing timings for roll and Sound Speed Data
+SDA = zeros(Pings.NumSamples(1),2);               % Array to allocate Sample Delay Info
+TSA = zeros(Pings.NumSamples(1),2);                % Array to allocate Time Stamps. Used for comparing timings for roll and Sound Speed Data
 for p = 1:length(Pings.PingTimeStamps) % the amount of pings we need data from
         sdr = 0:1/fs:(Pings.NumSamples(p)-1)/fs; %double(Pings.PingTimeStamps(p):1/fs:(Pings.PingTimeStamps(p) + ((Pings.NumSamples(p)-1)/fs))); % row vector for sample delay of ping p
         SDA(:,p) = sdr(1,:)'; % array with all time delays. Column i corresponds to ping i
@@ -312,18 +312,18 @@ s=1;
 rollTime=1;
 SoundTime=1;
 %for i = 1:length(Pings.PingTimeStamps) % total iterations needed for each ping in a .jsf
-for j = 1:MaxPingCtr
-    for k = 1:Pings.NumSamples(j)
+for CurrentPing = 1:MaxPingCtr
+    for CurrentSample = 1:Pings.NumSamples(CurrentPing)
      
-        OutMat(row,1) = j;    % Ping Number Column. Is adjusted directly by MaxPingCtr
+        OutMat(row,1) = CurrentPing;    % Ping Number Column. Is adjusted directly by MaxPingCtr
         %pNum=pNum+1;
         
-        OutMat(row,2) = k;    % Sample Number Column
+        OutMat(row,2) = CurrentSample;    % Sample Number Column
         %sNum=sNum+1;
         
         OutMat(row,3) = 0;    % Port/Stbd. This OutMat array is only for port side. For stbd, change 0->1. New OutMat will be generated later.
         
-        OutMat(row,4) = SDA(k,j); % Sample Delay data brought into OutMat
+        OutMat(row,4) = SDA(CurrentSample,CurrentPing); % Sample Delay data brought into OutMat
         %sDelay = sDelay + 1;
         
         % EX. d = Ping 3, Stbd Channel 9, Sample 206, Data: 
@@ -358,26 +358,28 @@ for j = 1:MaxPingCtr
         %OutMat(row,23) = real(Pings.StaveData(j, 10, k, 2));
         %OutMat(row,24) = imag(Pings.StaveData(j, 10, k, 2));
         
-        chanI = 1;  % Variable to keep track of Port side I and Q channel (I)
-        chanQ = 1;  % Variable to keep track of Port side I and Q channel (Q)
+        chanI_p = 1;   % Variable to keep track of Port side I and Q channel (I)
+        chanQ_p = 1;   % Variable to keep track of Port side I and Q channel (Q)
+        ChanI_s = 11;  % Variable to keep track of STBD side I and Q channel (I)
+        ChanQ_s = 11;  % Variable to keep track of STBD side I and Q channel (Q)
         for c=5:24 % Columns for I and Q channel Data
            if (mod(c,2)==1)  % odd columns recieve the real part of I and Q data (I)
-               OutMat(row,c) = real(Pings.StaveData(j,chanI,k,2)); % real I and Q data brought into OutMat
-               chanI = chanI + 1;
+               OutMat(row,c) = real(Pings.StaveData(CurrentPing,chanI_p,CurrentSample,2)); % real I and Q data brought into OutMat
+               chanI_p = chanI_p + 1;
            else             % even columns receive the imaginary part of I and Q Data (Q)
-               OutMat(row,c) = imag(Pings.StaveData(j,chanQ,k,2)); % Imaginary I and Q data brought into OutMat
-               chanQ = chanQ + 1;
+               OutMat(row,c) = imag(Pings.StaveData(CurrentPing,chanQ_p,CurrentSample,2)); % Imaginary I and Q data brought into OutMat
+               chanQ_p = chanQ_p + 1;
            end
         end
         % Next bit is for Roll and Sound Speed Column
-        tsr = Pings.PingTimeStamps(j):1/fs:(Pings.PingTimeStamps(j) + ((Pings.NumSamples(j)-1)/fs));    % Row array of time stamps for each ping
+        tsr = Pings.PingTimeStamps(CurrentPing):1/fs:(Pings.PingTimeStamps(CurrentPing) + ((Pings.NumSamples(CurrentPing)-1)/fs));    % Row array of time stamps for each ping
         TSA = tsr' ;            % Row array is converted to column array for easy comparison between time stamps of roll and sound speed
         
         % Roll
-        if ((TSA(k)>= Rolls(b,1))&&(TSA(k) < Rolls(b+1, 1)))                 % If Ping Time Stamp is less than that of the current roll time
+        if ((TSA(CurrentSample,1)>= Rolls(b,1))&&(TSA(CurrentSample,1) < Rolls(b+1, 1)))                 % If Ping Time Stamp is less than that of the current roll time
             OutMat(row,25) = Rolls(b,2);                % That current roll data is sent to that row of OutMat
         
-        elseif (TSA(k) < Rolls(b,1))
+        elseif (TSA(CurrentSample,1) < Rolls(b,1))
             OutMat(row,25) = NaN ;
             
         else                % ELSE 
@@ -390,9 +392,9 @@ for j = 1:MaxPingCtr
         end
         
         % Sound Speed
-        if ((TSA(k)>= SoundSpeeds(s,1)&&(TSA(k) < SoundSpeeds(s+1, 1))))      % same exact structure as Roll column
+        if ((TSA(CurrentSample,1)>= SoundSpeeds(s,1)&&(TSA(k,1) < SoundSpeeds(s+1, 1))))      % same exact structure as Roll column
             OutMat(row,26) = SoundSpeeds(s,2);
-        elseif (TSA(k) < SoundSpeeds(s,1))
+        elseif (TSA(CurrentSample,1) < SoundSpeeds(s,1))
             OutMat(row,26) = NaN ;
         else
             s=s+1;
