@@ -34,7 +34,7 @@ CSVfilenameStbd = fullfile(CSVfpath, CSVfileStbd);
 %numPings = 88723
 %numSamplesPerPing = 4340
 %numChannelsPerSample = 20
-%OutMat = uint32(NaN(1000*4340*20, 15));
+
 %OutMat = -69.*ones(1287*4340, 32);
 OutMat = -69.*ones(11*4340, 32);
 
@@ -193,10 +193,18 @@ fprintf('\nStave Data Processed\n')
     Measurements.PingTimeStamps = NaN(MaxPingCtr, 2) ;
     %                                       Port/Stbd
     Measurements.timeToFirstSample = NaN(MaxPingCtr, 2) ;
+    %Measurements.AngleScaleFactor = NaN(MaxPingCtr, 2) ;
+    
+    Measurements.SampleTimeStamp = NaN(MaxPingCtr, 2, SamplesPerPing);
+    Measurements.TWTT = NaN(MaxPingCtr, 2, SamplesPerPing);
+    Measurements.Angle = NaN(MaxPingCtr, 2, SamplesPerPing);
+    Measurements.Amplitude = NaN(MaxPingCtr, 2, SamplesPerPing);
+    Measurements.AngleUncertainty = NaN(MaxPingCtr, 2, SamplesPerPing);
+    Measurements.SampleRate = NaN(MaxPingCtr, 2, SamplesPerPing);
     
 %                              (1   2)              (1       2    3       4            5             6)                                
 % MeasurementData(PingIndex , Port/Stbd, Sample#, TimeStamp/RTT/Angle/Amplitude/AngleUncertainty/SampleRate)
-    Measurements.MeasurementData = NaN(MaxPingCtr, 2, SamplesPerPing, 6) ;
+    %Measurements.MeasurementData = NaN(MaxPingCtr, 2, SamplesPerPing, 6) ;
     
     %********************RYAN********************************************
     %the RTT represents the measured round trip time (between the instant
@@ -220,24 +228,26 @@ while ((M_Ctr_Port <= MaxPingCtr) || (M_Ctr_Stbd <= MaxPingCtr))
             Measurements.NumSamples(M_Ctr_Port, 1) = header.nsamps ;
             Measurements.PingTimeStamps(M_Ctr_Port, 1) = header.timeStamp ;
             Measurements.timeToFirstSample(M_Ctr_Port, 1) = header.timeToFirstSample ;
-            
+            %Measurements.AngleScaleFactor(M_Ctr_Port, 1) = header.angleScaleFactor;
             %PortRange(PoBathyCtr,1:header.nsamps) = data.TWTT .* cs / 2.0;
             
             %PortRTT(PoBathyCtr, 1:header.nsamps) = data.TWTT ;         
-            Measurements.MeasurementData(M_Ctr_Port, 1, 1:header.nsamps, 2) = data.TWTT ;
-            
+            %Measurements.MeasurementData(M_Ctr_Port, 1, 1:header.nsamps, 2) = data.TWTT ;
+            Measurements.TWTT(M_Ctr_Port, 1, 1:header.nsamps) = data.TWTT ;
             
             %PortAngle(PoBathyCtr,1:header.nsamps) = -data.Angle ;
-            Measurements.MeasurementData(M_Ctr_Port, 1, 1:header.nsamps, 3) = -data.Angle ;
-            
+            %Measurements.MeasurementData(M_Ctr_Port, 1, 1:header.nsamps, 3) = -data.Angle ;
+            Measurements.Angle(M_Ctr_Port, 1, 1:header.nsamps) = -data.Angle ;
             
             %PortAmp(PoBathyCtr,1:header.nsamps) = data.Amp ;
-            Measurements.MeasurementData(M_Ctr_Port, 1, 1:header.nsamps, 4) = data.Amp ;
+            %Measurements.MeasurementData(M_Ctr_Port, 1, 1:header.nsamps, 4) = data.Amp ;
+            Measurements.Amplitude(M_Ctr_Port, 1, 1:header.nsamps) = data.Amp ;
             
+            %Measurements.MeasurementData(M_Ctr_Port, 1, 1:header.nsamps, 5) = data.Sigma ;
+            Measurements.AngleUncertainty(M_Ctr_Port, 1, 1:header.nsamps) = data.Sigma ;
             
-            Measurements.MeasurementData(M_Ctr_Port, 1, 1:header.nsamps, 5) = data.Sigma ;
-            
-            Measurements.MeasurementData(M_Ctr_Port, 1, 1:header.nsamps, 6) = header.fsample ;
+            %Measurements.MeasurementData(M_Ctr_Port, 1, 1:header.nsamps, 6) = header.fsample ;
+            Measurements.SampleRate(M_Ctr_Port, 1, 1:header.nsamps) = header.fsample ;
             
             PortHeader(PoBathyCtr) = header ;
             if header.nsamps > PortMaxSound
@@ -255,23 +265,28 @@ while ((M_Ctr_Port <= MaxPingCtr) || (M_Ctr_Stbd <= MaxPingCtr))
             Measurements.NumSamples(M_Ctr_Stbd, 2) = header.nsamps ;
             Measurements.PingTimeStamps(M_Ctr_Stbd, 2) = header.timeStamp ;
             Measurements.timeToFirstSample(M_Ctr_Stbd, 2) = header.timeToFirstSample ;
-            
+            %Measurements.AngleScaleFactor(M_Ctr_Stbd, 2) = header.angleScaleFactor;
             
             %StbdRange(StBathyCtr,1:header.nsamps) = data.TWTT .* cs / 2.0;
             
             %StbdRTT(StBathyCtr, 1:header.nsamps) = data.TWTT ;
-            Measurements.MeasurementData(M_Ctr_Stbd, 2, 1:header.nsamps, 2) = data.TWTT ;
+            %Measurements.MeasurementData(M_Ctr_Stbd, 2, 1:header.nsamps, 2) = data.TWTT ;
+            Measurements.TWTT(M_Ctr_Stbd, 2, 1:header.nsamps) = data.TWTT ;
             
             %StbdAngle(StBathyCtr,1:header.nsamps) =  data.Angle  ;
-            Measurements.MeasurementData(M_Ctr_Stbd, 2, 1:header.nsamps, 3) = -data.Angle ;
-                                   
+            %Measurements.MeasurementData(M_Ctr_Stbd, 2, 1:header.nsamps, 3) = -data.Angle ;
+            Measurements.Angle(M_Ctr_Stbd, 2, 1:header.nsamps) = data.Angle ;  
+            
             %StbdAmp(StBathyCtr,1:header.nsamps) = data.Amp ;
-            Measurements.MeasurementData(M_Ctr_Stbd, 2, 1:header.nsamps, 4) = data.Amp ;
+            %Measurements.MeasurementData(M_Ctr_Stbd, 2, 1:header.nsamps, 4) = data.Amp ;
+            Measurements.Amplitude(M_Ctr_Stbd, 2, 1:header.nsamps) = data.Amp ;
             
-            Measurements.MeasurementData(M_Ctr_Stbd, 2, 1:header.nsamps, 5) = data.Sigma ;
+            %Measurements.MeasurementData(M_Ctr_Stbd, 2, 1:header.nsamps, 5) = data.Sigma ;
+            Measurements.AngleUncertainty(M_Ctr_Stbd, 2, 1:header.nsamps) = data.Sigma ;
             
-            Measurements.MeasurementData(M_Ctr_Stbd, 2, 1:header.nsamps, 6) = header.fsample ;
             
+            %Measurements.MeasurementData(M_Ctr_Stbd, 2, 1:header.nsamps, 6) = header.fsample ;
+            Measurements.SampleRate(M_Ctr_Stbd, 2, 1:header.nsamps) = header.fsample ;
             
             StbdHeader(StBathyCtr) = header ;
             
@@ -291,12 +306,111 @@ fprintf('\nBathy Data Processed\n');
 
 
 
+%% POSIX FIX:
+PosixTimeFirstPing = Pings.PingTimeStamps(1);
+TimeFirstPing = datetime(PosixTimeFirstPing, 'convertfrom', 'posixtime');
 
+TimeBeginOfDay = datetime(year(TimeFirstPing), month(TimeFirstPing), day(TimeFirstPing));
+%not completed, brain hurty
+
+%use the between() command to get time between two datetime vars.
+%then use the time() command on that to get it as a duration. 
+dt = time(between(TimeBeginOfDay, TimeFirstPing));
+
+numSeconds = 60*(60*hours(dt)+minutes(dt))+seconds(dt);
+
+fs=Measurements.SampleRate(1,1, 1);     % Sample Frequency taken from Measurements
+%TSA_DAY = zeros(Pings.NumSamples(1),1);
+TSA_DAY = numSeconds:1/fs:numSeconds+((Pings.NumSamples(1)-1)/fs); % This is MUCH more accurate to 1/fs than 
+
+%% TWTT Time Synchronization
+
+fs=Measurements.SampleRate(1,1, 1);     % Sample Frequency taken from Measurements
+
+% this is implemented just for the first ping..
+ThisPingNumber = 1; % ping 1
+PortOrStarboard = 1; % port
+TWTTs = squeeze(Measurements.TWTT(ThisPingNumber, PortOrStarboard, :));
+NumOfSampleSincePing = TWTTs./(1/fs);
+% round and then remove NaN values..
+RoundedNumOfSampleSincePing = rmmissing(round(NumOfSampleSincePing));
+
+
+
+
+%                                       Port/Stbd
+%Measurements.PingNum = NaN(MaxPingCtr, 2) ;
+%                                       Port/Stbd
+%Measurements.NumSamples = NaN(MaxPingCtr, 2) ;
+%                                       Port/Stbd
+%Measurements.PingTimeStamps = NaN(MaxPingCtr, 2) ;
+%                                       Port/Stbd
+%Measurements.timeToFirstSample = NaN(MaxPingCtr, 2) ;
+
+
+Soundings.PingNum = Measurements.PingNum;
+Soundings.PingTimeStamps = Measurements.PingTimeStamps;
+Soundings.TWTT = NaN(MaxPingCtr, 2, SamplesPerPing);
+Soundings.Angle = NaN(MaxPingCtr, 2, SamplesPerPing);
+Soundings.Amplitude = NaN(MaxPingCtr, 2, SamplesPerPing);
+Soundings.AngleUncertainty = NaN(MaxPingCtr, 2, SamplesPerPing);
+Soundings.SampleRate = NaN(MaxPingCtr, 2, SamplesPerPing);
+%Soundings.Range = NaN(MaxPingCtr, 2, SamplesPerPing); 
+
+for portPings = 1:MaxPingCtr
+   TWTTs = squeeze(Measurements.TWTT(portPings, 1, :));
+   %RNSSP = Rounded Number Of Samples Since Ping
+   RNSSP = rmmissing(round(TWTTs./(1/fs)));
+   for portSamps = 1:length(RNSSP)
+        Soundings.TWTT(portPings, 1, RNSSP(portSamps)) = Measurements.TWTT(portPings, 1, portSamps);
+        Soundings.Angle(portPings, 1, RNSSP(portSamps)) = Measurements.Angle(portPings, 1, portSamps).*(180/pi);    % now in degrees
+        Soundings.Amplitude(portPings, 1, RNSSP(portSamps)) = Measurements.Amplitude(portPings, 1, portSamps);
+        Soundings.AngleUncertainty(portPings, 1, RNSSP(portSamps)) = Measurements.AngleUncertainty(portPings, 1, portSamps);
+        Soundings.SampleRate(portPings, 1, RNSSP(portSamps)) = Measurements.SampleRate(portPings, 1, portSamps);
+   end
+end
+
+for stbdPings = 1:MaxPingCtr
+   TWTTs = squeeze(Measurements.TWTT(stbdPings, 2, :));
+   %RNSSP = Rounded Number Of Samples Since Ping
+   RNSSP = rmmissing(round(TWTTs./(1/fs)));
+   for stbdSamps = 1:length(RNSSP)
+        Soundings.TWTT(stbdPings, 2, RNSSP(stbdSamps)) = Measurements.TWTT(stbdPings, 1, stbdSamps);
+        Soundings.Angle(stbdPings, 2, RNSSP(stbdSamps)) = Measurements.Angle(stbdPings, 1, stbdSamps).*(180/pi);
+        Soundings.Amplitude(stbdPings, 2, RNSSP(stbdSamps)) = Measurements.Amplitude(stbdPings, 1, stbdSamps);      % now in degrees
+        Soundings.AngleUncertainty(stbdPings, 2, RNSSP(stbdSamps)) = Measurements.AngleUncertainty(stbdPings, 1, stbdSamps);
+        Soundings.SampleRate(stbdPings, 2, RNSSP(stbdSamps)) = Measurements.SampleRate(stbdPings, 1, stbdSamps);
+   end
+end
+
+fprintf('TWTT to SampleNumber Synchronization done\n\n');
+
+%% check for repeated sample numbers: may be unnecessary \_O_/
+numSounding = length(RoundedNumOfSampleSincePing)
+numUniqueSampleNums = length(unique(RoundedNumOfSampleSincePing))
+numRepeats = numSounding - numUniqueSampleNums
+
+R = RoundedNumOfSampleSincePing';
+B = R'./R;
+B = B-diag(diag(B));
+[row col] = find(B==1);
+%length(row);
+
+edges= min(RoundedNumOfSampleSincePing):max(RoundedNumOfSampleSincePing);
+[counts, values] = histcounts(RoundedNumOfSampleSincePing, edges);
+%max(counts)
+doubledElements = values(counts==2);
+tripledElements = values(counts==3);
+%indexes = find(RoundedNumOfSampleSincePing(:)==repeatedElements(1:length(repeatedElements)));
+%for k=1:length(repeatedElements)
+   %indexes = [indexes, find(RoundedNumOfSampleSincePing==repeatedElements(k))]; 
+%end
+%indexes
 %% Format all this information into OutMat
 % Data Formatting
 
 % Sample Delay Column
-fs=Measurements.MeasurementData(1,1, 1, 6);     % Sample Frequency taken from MeasurementData
+fs=Measurements.SampleRate(1,1, 1);     % Sample Frequency taken from MeasurementData
 SDA = zeros(Pings.NumSamples(1),2);               % Array to allocate Sample Delay Info
 TSA = zeros(Pings.NumSamples(1),2);                % Array to allocate Time Stamps. Used for comparing timings for roll and Sound Speed Data
 for p = 1:length(Pings.PingTimeStamps) % the amount of pings we need data from
@@ -325,38 +439,6 @@ for CurrentPing = 1:MaxPingCtr
         
         OutMat(row,4) = SDA(CurrentSample,CurrentPing); % Sample Delay data brought into OutMat
         %sDelay = sDelay + 1;
-        
-        % EX. d = Ping 3, Stbd Channel 9, Sample 206, Data: 
-        %   d = Pings.StaveData(3, 19, 206, 2) ;
-        %OutMat(row,5) = real(Pings.StaveData(j, 1, k, 2));
-        %OutMat(row,6) = imag(Pings.StaveData(j, 1, k, 2));
-        
-        %OutMat(row,7) = real(Pings.StaveData(j, 2, k, 2));
-        %OutMat(row,8) = imag(Pings.StaveData(j, 2, k, 2));
-        
-        %OutMat(row,9) = real(Pings.StaveData(j, 3, k, 2));
-        %OutMat(row,10) = imag(Pings.StaveData(j, 3, k, 2));
-        
-        %OutMat(row,11) = real(Pings.StaveData(j, 4, k, 2));
-        %OutMat(row,12) = imag(Pings.StaveData(j, 4, k, 2));
-        
-        %OutMat(row,13) = real(Pings.StaveData(j, 5, k, 2));
-        %OutMat(row,14) = imag(Pings.StaveData(j, 5, k, 2));
-        
-        %OutMat(row,15) = real(Pings.StaveData(j, 6, k, 2));
-        %OutMat(row,16) = imag(Pings.StaveData(j, 6, k, 2));
-        
-        %OutMat(row,17) = real(Pings.StaveData(j, 7, k, 2));
-        %OutMat(row,18) = imag(Pings.StaveData(j, 7, k, 2));
-        
-        %OutMat(row,19) = real(Pings.StaveData(j, 8, k, 2));
-        %OutMat(row,20) = imag(Pings.StaveData(j, 8, k, 2));
-        
-        %OutMat(row,21) = real(Pings.StaveData(j, 9, k, 2));
-        %OutMat(row,22) = imag(Pings.StaveData(j, 9, k, 2));
-        
-        %OutMat(row,23) = real(Pings.StaveData(j, 10, k, 2));
-        %OutMat(row,24) = imag(Pings.StaveData(j, 10, k, 2));
         
         chanI_p = 1;   % Variable to keep track of Port side I and Q channel (I)
         chanQ_p = 1;   % Variable to keep track of Port side I and Q channel (Q)
@@ -404,8 +486,25 @@ for CurrentPing = 1:MaxPingCtr
             OutMat(row,26) = SoundSpeeds(s,2);
                
         end
+        
+        
+        % DOA: col 27 (Should be 28 but Ryan-kun is baka)
+        OutMat(row, 27) = Soundings.Angle(CurrentPing, 1, CurrentSample);
+        % TWTT: col 28
+        OutMat(row, 28) = Soundings.TWTT(CurrentPing, 1, CurrentSample);
+        % Amplitude : col 29
+        OutMat(row, 29) = Soundings.Amplitude(CurrentPing, 1, CurrentSample);
+        % angle uncertainty : col 30
+        OutMat(row, 30) = Soundings.AngleUncertainty(CurrentPing, 1, CurrentSample);
+        % sample rate : col 31
+        OutMat(row, 31) = Soundings.SampleRate(CurrentPing, 1, CurrentSample);
+        % range : col 32        
+        %Range is the Speed of sound (col 26) * TWTT/2
+        OutMat(row, 32) = OutMat(row, 26).*(Soundings.TWTT(CurrentPing, 1, CurrentSample)./2);
+        
+        
+        
         row=row+1;
- 
     end
 end
 
@@ -423,7 +522,7 @@ fprintf('Sonar Data merged into output matrix. \n')
 
 % Replace A with actual CSV output data!
 %A = ones(4);
-%fprintf('Writing Output Matrix into CSV. Be Patient! \n')
-%writematrix(OutMat, CSVfilenamePort);
-%message = strcat('CSV File Written to:   ',' ', ' "', CSVfilenamePort, '"');
-%msgbox(message);
+fprintf('Writing Output Matrix into CSV. Be Patient! \n')
+writematrix(OutMat, CSVfilenamePort);
+message = strcat('CSV File Written to:   ',' ', ' "', CSVfilenamePort, '"');
+msgbox(message);
