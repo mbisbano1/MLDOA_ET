@@ -30,35 +30,21 @@ CSVfilePort = strcat(CSVfiles{1,1}, '_port.CSV');
 CSVfileStbd = strcat(CSVfiles{1,1}, '_stbd.CSV');
 CSVfilenamePort = fullfile(CSVfpath, CSVfilePort);
 CSVfilenameStbd = fullfile(CSVfpath, CSVfileStbd);
+
 %% Output File Matrix setup
-%numPings = 88723
-%numSamplesPerPing = 4340
-%numChannelsPerSample = 20
 
-OutMat = -69.*ones(1287*4340, 32);
-%OutMat = -69.*ones(11*4340, 32);
-
-
-%% Message List Declaration
-    % Stave Data:   Message 80                  [1]
-    % Roll Data:    Message 2020 or 3001        [5] or [43]
-    % Sound Speed:  Message 2060                [6]
-    % Bathy Data:   Message 3000                [42]
-    % 
-    % messageList = [1, 5, 6, 42];
-    
-%                                       readJSFv3_small(JSFfp,  messageList)                                    
-%function [messageHeader,data,header] = readJSFv3_small(fileid,reqDataType,concatChannels)
-
+	OutMat = -69.*ones(1287*4340, 32);
+	%OutMat = -69.*ones(11*4340, 32);
+	
 %% Message 2020 Data:
-% Create Rolls Matrix, which holds every Roll measurement and timestamp;
 
+% Create Rolls Matrix, which holds every Roll measurement and timestamp;
 % User defineable parameters
     RollCnt = 1 ;
 % Initialize Message 2020 Rolls() elements for efficiency
     Rolls = NaN(20000, 2) ;
-
-
+	
+	
 %% Message 2060 Data:
 % Create SoundSpeeds Matrix, which holds every speed of sound measurement and
 % timestamp;
@@ -69,7 +55,9 @@ OutMat = -69.*ones(1287*4340, 32);
     SoundSpeeds = NaN(1000, 2) ;
     % timestamp = SoundSpeeds(Count number, 1)
     % soundspeed = SoundSpeeds(Count number, 2)
-
+	
+	
+	
 %% Message 80 Data:
 % Create Pings Structure, which holds each ping and its corresponding data.
 
@@ -307,25 +295,6 @@ end
 fprintf('\nBathy Data Processed\n');
 
 
-
-%% POSIX FIX:
-PosixTimeFirstPing = Pings.PingTimeStamps(1);
-TimeFirstPing = datetime(PosixTimeFirstPing, 'convertfrom', 'posixtime');
-
-TimeBeginOfDay = datetime(year(TimeFirstPing), month(TimeFirstPing), day(TimeFirstPing));
-%not completed, brain hurty
-
-%use the between() command to get time between two datetime vars.
-%then use the time() command on that to get it as a duration. 
-dt = time(between(TimeBeginOfDay, TimeFirstPing));
-
-numSeconds = 60*(60*hours(dt)+minutes(dt))+seconds(dt);
-
-fs = Pings.SampleRate(1,1,1) ;
-%fs=Measurements.SampleRate(1,1, 1);     % Sample Frequency taken from Measurements
-%TSA_DAY = zeros(Pings.NumSamples(1),1);
-TSA_DAY = numSeconds:1/fs:numSeconds+((Pings.NumSamples(1)-1)/fs); % This is MUCH more accurate to 1/fs than 
-
 %% TWTT Time Synchronization
 
 fs=Measurements.SampleRate(1,1, 1);     % Sample Frequency taken from Measurements
@@ -387,71 +356,8 @@ for stbdPings = 1:MaxPingCtr
 end
 
 fprintf('TWTT to SampleNumber Synchronization done\n\n');
-%% test
-greebo = rmmissing((squeeze(Measurements.DelayIndex(1,1,:))));
-diff = [] ;
-for asdf = 2:length(greebo)
-    diff = [diff; greebo(asdf) - greebo(asdf-1)];
-end
-length(greebo)
-length(unique(diff))
-%% Synchronization: Window width = 1
-Soundings.PingNum = Measurements.PingNum;
-Soundings.PingTimeStamps = Measurements.PingTimeStamps;
-Soundings.TWTT = NaN(MaxPingCtr, 2, SamplesPerPing);
-Soundings.Angle = NaN(MaxPingCtr, 2, SamplesPerPing);
-Soundings.Amplitude = NaN(MaxPingCtr, 2, SamplesPerPing);
-Soundings.AngleUncertainty = NaN(MaxPingCtr, 2, SamplesPerPing);
-Soundings.SampleRate = NaN(MaxPingCtr, 2, SamplesPerPing);
-NumSoundings = length(rmmissing(unique(squeeze(Measurements.DelayIndex(1,1,:))))); 
 
-for portPings = 1:MaxPingCtr
-%   TWTTs = squeeze(Measurements.TWTT(portPings, 1, :));
-   %RNSSP = Rounded Number Of Samples Since Ping
- %  RNSSP = rmmissing(round(TWTTs./(1/fs)));
-   DelayIndices = rmmissing(squeeze(Measurements.DelayIndex(portPings, 1, :)));
-   for portSamps = 1:length(DelayIndices)
-        Soundings.TWTT(portPings, 1, DelayIndices(portSamps)+1) = Measurements.TWTT(portPings, 1, portSamps);
-        Soundings.Angle(portPings, 1, DelayIndices(portSamps)+1) = Measurements.Angle(portPings, 1, portSamps).*(180/pi);
-        Soundings.Amplitude(portPings, 1, DelayIndices(portSamps)+1) = Measurements.Amplitude(portPings, 1, portSamps);
-        Soundings.AngleUncertainty(portPings, 1, DelayIndices(portSamps)+1) = Measurements.AngleUncertainty(portPings, 1, portSamps);
-        Soundings.SampleRate(portPings, 1, DelayIndices(portSamps)+1) = Measurements.SampleRate(portPings, 1, portSamps);
-   end
-end
-for stbdPings = 1:MaxPingCtr
-%   TWTTs = squeeze(Measurements.TWTT(portPings, 1, :));
-   %RNSSP = Rounded Number Of Samples Since Ping
- %  RNSSP = rmmissing(round(TWTTs./(1/fs)));
-   DelayIndicesStbd = rmmissing(squeeze(Measurements.DelayIndex(stbdPings, 2, :)));
-   for stbdSamps = 1:length(DelayIndicesStbd)
-        Soundings.TWTT(stbdPings, 2, DelayIndicesStbd(stbdSamps)+1) = Measurements.TWTT(stbdPings, 2, stbdSamps);
-        Soundings.Angle(stbdPings, 2, DelayIndicesStbd(stbdSamps)+1) = Measurements.Angle(stbdPings, 2, stbdSamps).*(180/pi);
-        Soundings.Amplitude(stbdPings, 2, DelayIndicesStbd(stbdSamps)+1) = Measurements.Amplitude(stbdPings, 2, stbdSamps);
-        Soundings.AngleUncertainty(stbdPings, 2, DelayIndicesStbd(stbdSamps)+1) = Measurements.AngleUncertainty(stbdPings, 2, stbdSamps);
-        Soundings.SampleRate(stbdPings, 2, DelayIndicesStbd(stbdSamps)+1) = Measurements.SampleRate(stbdPings, 2, stbdSamps);
-   end
-end
-%% check for repeated sample numbers: may be unnecessary \_O_/
-numSounding = length(RoundedNumOfSampleSincePing)
-numUniqueSampleNums = length(unique(RoundedNumOfSampleSincePing))
-numRepeats = numSounding - numUniqueSampleNums
 
-R = RoundedNumOfSampleSincePing' ;
-B = R'./R ;
-B = B-diag(diag(B)) ;
-[row col] = find(B==1) ;
-%length(row);
-
-edges= min(RoundedNumOfSampleSincePing):max(RoundedNumOfSampleSincePing);
-[counts, values] = histcounts(RoundedNumOfSampleSincePing, edges);
-%max(counts)
-doubledElements = values(counts==2);
-tripledElements = values(counts==3);
-%indexes = find(RoundedNumOfSampleSincePing(:)==repeatedElements(1:length(repeatedElements)));
-%for k=1:length(repeatedElements)
-   %indexes = [indexes, find(RoundedNumOfSampleSincePing==repeatedElements(k))]; 
-%end
-%indexes
 %% Format all this information into OutMat
 % Data Formatting
 
@@ -474,6 +380,7 @@ rollTime=1;
 SoundTime=1;
 %for i = 1:length(Pings.PingTimeStamps) % total iterations needed for each ping in a .jsf
 for CurrentPing = 1:MaxPingCtr
+	fprintf('Current Ping = %d\n', CurrentPing);
     for CurrentSample = 1:Pings.NumSamples(CurrentPing)
      
         OutMat(row,1) = CurrentPing;    % Ping Number Column. Is adjusted directly by MaxPingCtr
@@ -569,6 +476,8 @@ end
 msgbox('Hey dont forget to change the ping numbers!')
 fprintf('Sonar Data merged into output matrix. \n')
 
+
+
 %% Port OutMat removing samples with missing sounding information:
     % find all rows with missing DOA.
     NewOutMat2 = OutMat;
@@ -610,8 +519,8 @@ fprintf('Sonar Data merged into output matrix. \n')
 % it and verify data. Later, we can output the full OutMat into a .CSV,
 % which shouldn't have a length limit!
 
-testFileName = 'Training_Port1.csv';
-CSVfilenamePort = fullfile(CSVfpath, testFileName);
+OutputFileName = 'Training_Port1.csv';
+CSVfilenamePort = fullfile(CSVfpath, OutputFileName);
 
 
 %msgbox('Done.') ;
