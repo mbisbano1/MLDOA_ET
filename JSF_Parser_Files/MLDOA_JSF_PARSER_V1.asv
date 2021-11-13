@@ -571,27 +571,17 @@ fprintf('Sonar Data merged into output matrix. \n')
 
 %% Port OutMat removing samples with missing sounding information:
     % find all rows with missing DOA.
-    NewOutMat2 = OutMat;
-    RowIndexMissingDOA(:, 1) = isnan(NewOutMat2(:,27)) ;
-    NewOutMat2(RowIndexMissingDOA==1, :) = [];
-%     for r = length(RowIndexMissingDOA):-1:1
-%         if(RowIndexMissingDOA(r,1)==1)
-%           %fprintf('removed row\n');
-%           NewOutMat(r,:) = [];
-%         end
-%     end
-    
-%% Port OutMat removing samples with missing roll or soundspeed info:
-    
-    firstGoodRow = 1;
-    row = 1;
-    while isnan(NewOutMat(row,26))    
-        row=row+1;
-        firstGoodRow = row;
+    NewOutMat = OutMat;
+    RowIndexMissingDOA(:, 1) = isnan(NewOutMat(:,27)) ;
+    for r = length(RowIndexMissingDOA):-1:1
+        if(RowIndexMissingDOA(r,1)==1)
+          %fprintf('removed row\n');
+          NewOutMat(r,:) = [];
+        end
     end
     
-    FinalOutMat = NewOutMat(firstGoodRow:length(NewOutMat), :);
-% find all rows with missing data
+%% Port OutMat removing samples with missing roll or soundspeed info:
+    % find all rows with missing data
 %     FinalOutMat = NewOutMat;
 %     RowIndexMissingData(:, 1) = (isnan(FinalOutMat(:,25)) | isnan(FinalOutMat(:, 26)));
 %     
@@ -603,6 +593,19 @@ fprintf('Sonar Data merged into output matrix. \n')
 %         end
 %     end
 
+
+%% While loop to remove
+
+firstGoodRow = 1;
+row = 1;
+while isnan(NewOutMat(row,26))    
+    row=row+1;
+    firstGoodRow = row;
+end
+
+
+    %cells = num2cell(OutMat);
+    %OutMatCells = [ColumnNames ; cells];
     
 %% Write Output CSV File
 
@@ -610,8 +613,8 @@ fprintf('Sonar Data merged into output matrix. \n')
 % it and verify data. Later, we can output the full OutMat into a .CSV,
 % which shouldn't have a length limit!
 
-testFileName = 'Training_Port1.csv';
-CSVfilenamePort = fullfile(CSVfpath, testFileName);
+%testFileName = 'test1.csv';
+%CSVfilenamePort = fullfile(CSVfpath, testFileName);
 
 
 %msgbox('Done.') ;
@@ -626,6 +629,6 @@ ColumnNames = {'Ping#', 'Sample#', 'Port/Stbd', 'SampleTimeDelay', ...
         'I9', 'Q9', 'I10', 'Q10', 'Roll', 'C', ...
         'DOA', 'TWTT', 'Amplitude', 'AngleUncertainty', 'SampleRate', 'Range'};
 writecell(ColumnNames, CSVfilenamePort)
-writematrix(FinalOutMat, CSVfilenamePort, 'WriteMode', 'append');
+writematrix(OutMat, CSVfilenamePort, 'WriteMode', 'append');
 message = strcat('CSV File Written to:   ',' ', ' "', CSVfilenamePort, '"');
 msgbox(message);
