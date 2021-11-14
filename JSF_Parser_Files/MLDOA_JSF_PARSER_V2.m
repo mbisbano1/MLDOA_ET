@@ -358,7 +358,7 @@ end
 fprintf('TWTT to SampleNumber Synchronization done\n\n');
 
 
-%% Format all this information into OutMat
+%% Format all this information into OutMat (PORT)
 % Data Formatting
 
 % Sample Delay Column
@@ -476,13 +476,129 @@ end
 msgbox('Hey dont forget to change the ping numbers!')
 fprintf('Sonar Data merged into output matrix. \n')
 
+%% Format all this information into OutMat (STBD)
+% Data Formatting
 
+% Sample Delay Column
+fs=Measurements.SampleRate(1,1, 1);     % Sample Frequency taken from MeasurementData.. Much higher resolution
+    %fs = Pings.SampleFreq(1,1,1);
+SDA = zeros(Pings.NumSamples(1),2);               % Array to allocate Sample Delay Info
+TSA = zeros(Pings.NumSamples(1),2);                % Array to allocate Time Stamps. Used for comparing timings for roll and Sound Speed Data
+for p = 1:length(Pings.PingTimeStamps) % the amount of pings we need data from
+        sdr = 0:1/fs:(Pings.NumSamples(p)-1)/fs; %double(Pings.PingTimeStamps(p):1/fs:(Pings.PingTimeStamps(p) + ((Pings.NumSamples(p)-1)/fs))); % row vector for sample delay of ping p
+        SDA(:,p) = sdr(1,:)'; % array with all time delays. Column i corresponds to ping i
+        %vp = vpa(TSC);
+end
+
+% Bring Formatted Data into OutMat
+row=1; % Instantiation of a row. Keeps track of which row in OutMat the system is currently on
+b=1;
+s=1;
+rollTime=1;
+SoundTime=1;
+%for i = 1:length(Pings.PingTimeStamps) % total iterations needed for each ping in a .jsf
+for CurrentPing = 1:MaxPingCtr
+	fprintf('Current Ping = %d\n', CurrentPing);
+    for CurrentSample = 1:Pings.NumSamples(CurrentPing)
+     
+        OutMat(row,1) = CurrentPing;    % Ping Number Column. Is adjusted directly by MaxPingCtr
+        %pNum=pNum+1;
+        
+        OutMat(row,2) = CurrentSample;    % Sample Number Column
+        %sNum=sNum+1;
+        
+        OutMat(row,3) = 1;    % Port/Stbd. This OutMat array is only for stbd side. For stbd, change 0->1. New OutMat will be generated later.
+        
+        OutMat(row,4) = SDA(CurrentSample,CurrentPing); % Sample Delay data brought into OutMat
+        %sDelay = sDelay + 1;
+        
+        chanI_p = 1;   % Variable to keep track of Port side I and Q channel (I)
+        chanQ_p = 1;   % Variable to keep track of Port side I and Q channel (Q)
+        ChanI_s = 11;  % Variable to keep track of STBD side I and Q channel (I)
+        ChanQ_s = 11;  % Variable to keep track of STBD side I and Q channel (Q)
+        for c=5:24 % Columns for I and Q channel Data
+           if (mod(c,2)==1)  % odd columns recieve the real part of I and Q data (I)
+               OutMat(row,c) = real(Pings.StaveData(CurrentPing,ChanI_s,CurrentSample,2)); % real I and Q data brought into OutMat
+               ChanI_s = ChanI_s + 1;
+           else             % even columns receive the imaginary part of I and Q Data (Q)
+               OutMat(row,c) = imag(Pings.StaveData(CurrentPing,ChanQ_s,CurrentSample,2)); % Imaginary I and Q data brought into OutMat
+               ChanQ_s = ChanQ_s + 1;
+           end
+        end
+        % Next bit is for Roll and Sound Speed Column
+        NumSecondsThisPing = POSIX1970_TO_DAY(Pings.PingTimeStamps(CurrentPing));
+        tsr = NumSecondsThisPing:1/fs:(NumSecondsThisPing +((Pings.NumSamples(CurrentPing)-1)/fs));    % Row array of time stamps for each ping
+        
+        %tsr = Pings.PingTimeStamps(CurrentPing):1/fs:(Pings.PingTimeStamps(CurrentPing) + ((Pings.NumSamples(CurrentPing)-1)/fs));    % Row array of time stamps for each ping
+        
+        TSA = tsr' ;            % Row array is converted to column array for easy comparison between time stamps of roll and sound speed
+        
+        % Roll
+        NumSecondsRolls = POSIX1970_TO_DAY(Rolls(b, 1));
+        NumSecondsNextRolls = POSIX1970_TO_DAY(Rolls(b+1, 1));
+        %if ((TSA(CurrentSample,1)>= Rolls(b,1))&&(TSA(CurrentSample,1) < Rolls(b+1, 1)))                 % If Ping Time Stamp is less than that of the current roll time
+        if ((TSA(CurrentSample,1)>= NumSecondsRolls)&&(TSA(CurrentSample,1) < NumSecondsNextRolls))                 % If Ping Time Stamp is less than that of the current roll time
+            OutMat(row,25) = Rolls(b,2);                % That current roll data is sent to that row of OutMat
+        
+        elseif (TSA(CurrentSample,1) < NumSecondsRolls)
+            OutMat(row,25) = NaN ;
+            
+        else                % ELSE 
+            b=b+1;                 % increase roll row by 1   
+            if  b>RollCnt-1     % check if row does not excede valid data
+                b=RollCnt-1;
+            end
+            OutMat(row,25) = Rolls(b, 2); %Rolls(b,2);  % New role data is sent to that current row of OutMat
+               
+        end
+        
+        % Sound Speed
+        NumSecondsSoundSpeeds = POSIX1970_TO_DAY(SoundSpeeds(s,1));
+        NumSecondsNextSoundSpeeds = POSIX1970_TO_DAY(SoundSpeeds(s+1,1));
+        %if ((TSA(CurrentSample,1)>= SoundSpeeds(s,1)&&(TSA(CurrentSample,1) < SoundSpeeds(s+1, 1))))      % same exact structure as Roll column
+        if ((TSA(CurrentSample,1)>= NumSecondsSoundSpeeds&&(TSA(CurrentSample,1) < NumSecondsNextSoundSpeeds)))      % same exact structure as Roll column
+            OutMat(row,26) = SoundSpeeds(s,2);
+        elseif (TSA(CurrentSample,1) < NumSecondsSoundSpeeds)
+            OutMat(row,26) = NaN ;
+        else
+            s=s+1;
+            if  s>SoundCnt-1
+                s=SoundCnt-1;
+            end
+            OutMat(row,26) = SoundSpeeds(s,2);
+               
+        end
+        
+        
+        % DOA: col 27 (Should be 28 but Ryan-kun is baka)
+        OutMat(row, 27) = Soundings.Angle(CurrentPing, 2, CurrentSample);
+        % TWTT: col 28
+        OutMat(row, 28) = Soundings.TWTT(CurrentPing, 2, CurrentSample);
+        % Amplitude : col 29
+        OutMat(row, 29) = Soundings.Amplitude(CurrentPing, 2, CurrentSample);
+        % angle uncertainty : col 30
+        OutMat(row, 30) = Soundings.AngleUncertainty(CurrentPing, 2, CurrentSample);
+        % sample rate : col 31
+        OutMat(row, 31) = Soundings.SampleRate(CurrentPing, 2, CurrentSample);
+        % range : col 32        
+        %Range is the Speed of sound (col 26) * TWTT/2
+        OutMat(row, 32) = OutMat(row, 26).*(Soundings.TWTT(CurrentPing, 2, CurrentSample)./2);
+        
+        
+        
+        row=row+1;
+    end
+end
+
+%end
+msgbox('Hey dont forget to change the ping numbers!')
+fprintf('Sonar Data merged into output matrix. \n')
 
 %% Port OutMat removing samples with missing sounding information:
     % find all rows with missing DOA.
-    NewOutMat2 = OutMat;
-    RowIndexMissingDOA(:, 1) = isnan(NewOutMat2(:,27)) ;
-    NewOutMat2(RowIndexMissingDOA==1, :) = [];
+    NewOutMat = OutMat;
+    RowIndexMissingDOA(:, 1) = isnan(NewOutMat(:,27)) ;
+    NewOutMat(RowIndexMissingDOA==1, :) = [];
 %     for r = length(RowIndexMissingDOA):-1:1
 %         if(RowIndexMissingDOA(r,1)==1)
 %           %fprintf('removed row\n');
@@ -490,7 +606,7 @@ fprintf('Sonar Data merged into output matrix. \n')
 %         end
 %     end
     
-%% Port OutMat removing samples with missing roll or soundspeed info:
+%% OutMat removing samples with missing roll or soundspeed info:
     
     firstGoodRow = 1;
     row = 1;
@@ -519,8 +635,9 @@ fprintf('Sonar Data merged into output matrix. \n')
 % it and verify data. Later, we can output the full OutMat into a .CSV,
 % which shouldn't have a length limit!
 
-OutputFileName = 'Training_Port1.csv';
-CSVfilenamePort = fullfile(CSVfpath, OutputFileName);
+%specify output name
+    OutputFileName = 'Test_Stbd1.csv';
+    CSVfilenamePort = fullfile(CSVfpath, OutputFileName);
 
 
 %msgbox('Done.') ;
