@@ -365,7 +365,7 @@ fprintf('TWTT to SampleNumber Synchronization done\n\n');
     Pings.StbdStaveData = Pings.StaveData(:, stbdIndices, :, 2);
 
 
-%% Format all this information into OutMat
+%% Format all this information into OutMat (PORT)
 % Data Formatting
 
 % Sample Delay Column
@@ -387,7 +387,7 @@ rollTime=1;
 SoundTime=1;
 %port_or_stbd = input('Create "port" or "stbd" CSV  ', 's');
 prompt = 'Create port or stbd CSV? Enter p or s:   ';
-port_or_stbd = input(prompt, 's');
+port_or_stbd = input(prompt, 
 %for i = 1:length(Pings.PingTimeStamps) % total iterations needed for each ping in a .jsf
 for CurrentPing = 1:MaxPingCtr
 	fprintf('Current Ping = %d\n', CurrentPing);
@@ -407,23 +407,23 @@ for CurrentPing = 1:MaxPingCtr
         chanI = 1;   % Variable to keep track of Port side I and Q channel (I)
         chanQ = 1;   % Variable to keep track of Port side I and Q channel (Q)
         
-        if isequal(port_or_stbd, 'p')
+        if isequal(port_or_stbd, 'port')
             for c=5:24  %Columns for I and Q channel Data
                 if (mod(c,2)==1)  % odd columns recieve the real part of I and Q data (I)
-                    OutMat(row,c) = real(Pings.PortStaveData(CurrentPing,chanI,CurrentSample)); % real I and Q data brought into OutMat
+                    OutMat(row,c) = real(Pings.PortStaveData(CurrentPing,chanI,CurrentSample,2)); % real I and Q data brought into OutMat
                     chanI = chanI + 1;
                 else             % even columns receive the imaginary part of I and Q Data (Q)
-                    OutMat(row,c) = imag(Pings.PortStaveData(CurrentPing,chanQ,CurrentSample)); % Imaginary I and Q data brought into OutMat
+                    OutMat(row,c) = imag(Pings.PortStaveData(CurrentPing,chanQ,CurrentSample,2)); % Imaginary I and Q data brought into OutMat
                     chanQ = chanQ + 1;
                 end               
             end        
-        elseif isequal(port_or_stbd, 's')
+        elseif isequal(port_or_stbd, 'stbd')
             for c=5:24  %Columns for I and Q channel Data
                 if (mod(c,2)==1)  % odd columns recieve the real part of I and Q data (I)
-                    OutMat(row,c) = real(Pings.StbdStaveData(CurrentPing,chanI,CurrentSample)); % real I and Q data brought into OutMat
+                    OutMat(row,c) = real(Pings.StbdStaveData(CurrentPing,chanI,CurrentSample,2)); % real I and Q data brought into OutMat
                     chanI = chanI + 1;
                 else             % even columns receive the imaginary part of I and Q Data (Q)
-                    OutMat(row,c) = imag(Pings.StbdStaveData(CurrentPing,chanQ,CurrentSample)); % Imaginary I and Q data brought into OutMat
+                    OutMat(row,c) = imag(Pings.StbdStaveData(CurrentPing,chanQ,CurrentSample,2)); % Imaginary I and Q data brought into OutMat
                     chanQ = chanQ + 1;
                 end               
             end
