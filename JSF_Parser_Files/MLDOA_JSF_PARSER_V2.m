@@ -472,21 +472,25 @@ for CurrentPing = 1:MaxPingCtr
             OutMat(row,26) = SoundSpeeds(s,2);
                
         end
-        
-        
+        msg3000portstbd = -1;
+        if isequal(port_or_stbd, 'p')
+            msg3000portstbd = 1;
+        elseif isequal(port_or_stbd, 's')
+            msg3000portstbd = 2;
+        end
         % DOA: col 27 (Should be 28 but Ryan-kun is baka)
-        OutMat(row, 27) = Soundings.Angle(CurrentPing, 1, CurrentSample);
+        OutMat(row, 27) = Soundings.Angle(CurrentPing, msg3000portstbd, CurrentSample);
         % TWTT: col 28
-        OutMat(row, 28) = Soundings.TWTT(CurrentPing, 1, CurrentSample);
+        OutMat(row, 28) = Soundings.TWTT(CurrentPing, msg3000portstbd, CurrentSample);
         % Amplitude : col 29
-        OutMat(row, 29) = Soundings.Amplitude(CurrentPing, 1, CurrentSample);
+        OutMat(row, 29) = Soundings.Amplitude(CurrentPing, msg3000portstbd, CurrentSample);
         % angle uncertainty : col 30
-        OutMat(row, 30) = Soundings.AngleUncertainty(CurrentPing, 1, CurrentSample);
+        OutMat(row, 30) = Soundings.AngleUncertainty(CurrentPing, msg3000portstbd, CurrentSample);
         % sample rate : col 31
-        OutMat(row, 31) = Soundings.SampleRate(CurrentPing, 1, CurrentSample);
+        OutMat(row, 31) = Soundings.SampleRate(CurrentPing, msg3000portstbd, CurrentSample);
         % range : col 32        
         %Range is the Speed of sound (col 26) * TWTT/2
-        OutMat(row, 32) = OutMat(row, 26).*(Soundings.TWTT(CurrentPing, 1, CurrentSample)./2);
+        OutMat(row, 32) = OutMat(row, 26).*(Soundings.TWTT(CurrentPing, msg3000portstbd, CurrentSample)./2);
         
         
         
