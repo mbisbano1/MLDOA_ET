@@ -388,6 +388,12 @@ SoundTime=1;
 %port_or_stbd = input('Create "port" or "stbd" CSV  ', 's');
 prompt = 'Create port or stbd CSV? Enter p or s:   ';
 port_or_stbd = input(prompt, 's');
+port_stbd_value = -1;
+if isequal(port_or_stbd, 'p')
+    port_stbd_value = 0;
+elseif isequal(port_or_stbd, 's')
+    port_stbd_value = 1;    
+end 
 %for i = 1:length(Pings.PingTimeStamps) % total iterations needed for each ping in a .jsf
 for CurrentPing = 1:MaxPingCtr
 	fprintf('Current Ping = %d\n', CurrentPing);
@@ -399,7 +405,7 @@ for CurrentPing = 1:MaxPingCtr
         OutMat(row,2) = CurrentSample;    % Sample Number Column
         %sNum=sNum+1;
         
-        OutMat(row,3) = 0;    % Port/Stbd. This OutMat array is only for port side. For stbd, change 0->1. New OutMat will be generated later.
+        OutMat(row,3) = port_stbd_value;    % Port/Stbd. 0 -> Port, 1 -> Stbd.
         
         OutMat(row,4) = SDA(CurrentSample,CurrentPing); % Sample Delay data brought into OutMat
         %sDelay = sDelay + 1;
