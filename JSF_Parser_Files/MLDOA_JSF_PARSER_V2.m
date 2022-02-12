@@ -26,8 +26,8 @@ JSF_Processed_fp = fopen([JSFfpath,JSFfilename2],'r');
 
 
 CSVfiles = split(JSFfilename, "_Stave.jsf");
-CSVfilePort = strcat(CSVfiles{1,1}, '_port.CSV');
-CSVfileStbd = strcat(CSVfiles{1,1}, '_stbd.CSV');
+CSVfilePort = strcat(CSVfiles{1,1}, '_port_new.CSV');
+CSVfileStbd = strcat(CSVfiles{1,1}, '_stbd_new.CSV');
 CSVfilenamePort = fullfile(CSVfpath, CSVfilePort);
 CSVfilenameStbd = fullfile(CSVfpath, CSVfileStbd);
 
@@ -400,6 +400,7 @@ for CurrentPing = 1:MaxPingCtr
     for CurrentSample = 1:Pings.NumSamples(CurrentPing)
      
         OutMat(row,1) = CurrentPing;    % Ping Number Column. Is adjusted directly by MaxPingCtr
+        OutMat(row,1) = Soundings.PingNum(CurrentPing, 1+port_stbd_value);
         %pNum=pNum+1;
         
         OutMat(row,2) = CurrentSample;    % Sample Number Column
@@ -500,6 +501,7 @@ for CurrentPing = 1:MaxPingCtr
         
         
         
+        
         row=row+1;
     end
 end
@@ -552,7 +554,7 @@ fprintf('Sonar Data merged into output matrix. \n')
 % which shouldn't have a length limit!
 
 %specify output name
-    OutputFileName = 'Test_Stbd1.csv';
+    OutputFileName = 'test1_stbd_new.csv';
     CSVfilenamePort = fullfile(CSVfpath, OutputFileName);
 
 
@@ -561,12 +563,18 @@ fprintf('Sonar Data merged into output matrix. \n')
 % Replace A with actual CSV output data!
 %A = ones(4);
 fprintf('Writing Output Matrix into CSV. Be Patient! \n')
-
-ColumnNames = {'Ping#', 'Sample#', 'Port/Stbd', 'SampleTimeDelay', ...
+ColumnNames = {'PingNum', 'SampleNum', 'PortStbd', 'SampleTimeDelay', ...
         'I1','Q1', 'I2', 'Q2', 'I3', 'Q3', 'I4', 'Q4',...
         'I5', 'Q5', 'I6', 'Q6', 'I7', 'Q7', 'I8', 'Q8',...
         'I9', 'Q9', 'I10', 'Q10', 'Roll', 'C', ...
         'DOA', 'TWTT', 'Amplitude', 'AngleUncertainty', 'SampleRate', 'Range'};
+
+
+%ColumnNames = {'Ping#', 'Sample#', 'Port/Stbd', 'SampleTimeDelay', ...
+%        'I1','Q1', 'I2', 'Q2', 'I3', 'Q3', 'I4', 'Q4',...
+%        'I5', 'Q5', 'I6', 'Q6', 'I7', 'Q7', 'I8', 'Q8',...
+%        'I9', 'Q9', 'I10', 'Q10', 'Roll', 'C', ...
+%        'DOA', 'TWTT', 'Amplitude', 'AngleUncertainty', 'SampleRate', 'Range'};
 writecell(ColumnNames, CSVfilenamePort)
 writematrix(FinalOutMat, CSVfilenamePort, 'WriteMode', 'append');
 message = strcat('CSV File Written to:   ',' ', ' "', CSVfilenamePort, '"');
