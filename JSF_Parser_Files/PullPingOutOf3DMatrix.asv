@@ -1,0 +1,23 @@
+%% method to pull Array w/ ping number N out of 3DMatrix
+    % This works, just uncomment.
+    %N = 16;
+
+    %firstPingNumIn3D = output3DMatrix(1,1,6);
+
+    %ArrayN = squeeze(output3DMatrix(N-firstPingNumIn3D + 1, :, :));
+
+    
+function ArrayN = PullPingOutOf3DMatrix(output3DMatrix, N)
+    firstPingNumIn3D = output3DMatrix(1,1,6);
+    try
+        ArrayN = squeeze(output3DMatrix(N-firstPingNumIn3D + 1, :, :));
+    catch EX
+        %disp(EX)
+        if strcmp(EX.message, 'Index in position 1 is invalid. Array indices must be positive integers or logical values.'
+            ArrayN = 'PingTooLow';
+        elseif strcmp(EX.message(1:40), 'Index in position 1 exceeds array bounds')            
+            ArrayN = 'PingTooHigh';
+        end
+        
+    end
+end

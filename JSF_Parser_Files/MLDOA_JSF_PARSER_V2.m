@@ -3,7 +3,7 @@ clear variables ;
 close all ;
 clc       ;
 %% Path Setup and File Open
-[JSFfpath, CSVfpath] = MB_FPATH_SET();
+[JSFfpath, CSVfpath, AIOUTPUTCSVfpath] = MB_FPATH_SET();
 %[JSFfpath, CSVfpath] = RF_FPATH_SET();
 %[JSFfpath, CSVfpath] = DL_FPATH_SET();
 
