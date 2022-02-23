@@ -246,7 +246,7 @@ while ((M_Ctr_Port <= MaxPingCtr) || (M_Ctr_Stbd <= MaxPingCtr))
             
             %PortAngle(PoBathyCtr,1:header.nsamps) = -data.Angle ;
             %Measurements.MeasurementData(M_Ctr_Port, 1, 1:header.nsamps, 3) = -data.Angle ;
-            Measurements.Angle(M_Ctr_Port, 1, 1:header.nsamps) = -data.Angle ;
+            Measurements.Angle(M_Ctr_Port, 1, 1:header.nsamps) = data.Angle ;
             
             %PortAmp(PoBathyCtr,1:header.nsamps) = data.Amp ;
             %Measurements.MeasurementData(M_Ctr_Port, 1, 1:header.nsamps, 4) = data.Amp ;
@@ -286,7 +286,7 @@ while ((M_Ctr_Port <= MaxPingCtr) || (M_Ctr_Stbd <= MaxPingCtr))
             
             %StbdAngle(StBathyCtr,1:header.nsamps) =  data.Angle  ;
             %Measurements.MeasurementData(M_Ctr_Stbd, 2, 1:header.nsamps, 3) = -data.Angle ;
-            Measurements.Angle(M_Ctr_Stbd, 2, 1:header.nsamps) = data.Angle ;  
+            Measurements.Angle(M_Ctr_Stbd, 2, 1:header.nsamps) = -data.Angle ;  
             
             %StbdAmp(StBathyCtr,1:header.nsamps) = data.Amp ;
             %Measurements.MeasurementData(M_Ctr_Stbd, 2, 1:header.nsamps, 4) = data.Amp ;
@@ -368,11 +368,11 @@ for stbdPings = 1:MaxPingCtr
    %RNSSP = Rounded Number Of Samples Since Ping
    RNSSP = rmmissing(round(TWTTs./(1/fs)));
    for stbdSamps = 1:length(RNSSP)
-        Soundings.TWTT(stbdPings, 2, RNSSP(stbdSamps)+1) = Measurements.TWTT(stbdPings, 1, stbdSamps);
-        Soundings.Angle(stbdPings, 2, RNSSP(stbdSamps)+1) = Measurements.Angle(stbdPings, 1, stbdSamps).*(180/pi);
-        Soundings.Amplitude(stbdPings, 2, RNSSP(stbdSamps)+1) = Measurements.Amplitude(stbdPings, 1, stbdSamps);      % now in degrees
-        Soundings.AngleUncertainty(stbdPings, 2, RNSSP(stbdSamps)+1) = Measurements.AngleUncertainty(stbdPings, 1, stbdSamps);
-        Soundings.SampleRate(stbdPings, 2, RNSSP(stbdSamps)+1) = Measurements.SampleRate(stbdPings, 1, stbdSamps);
+        Soundings.TWTT(stbdPings, 2, RNSSP(stbdSamps)+1) = Measurements.TWTT(stbdPings, 2, stbdSamps);
+        Soundings.Angle(stbdPings, 2, RNSSP(stbdSamps)+1) = Measurements.Angle(stbdPings, 2, stbdSamps).*(180/pi);
+        Soundings.Amplitude(stbdPings, 2, RNSSP(stbdSamps)+1) = Measurements.Amplitude(stbdPings, 2, stbdSamps);      % now in degrees
+        Soundings.AngleUncertainty(stbdPings, 2, RNSSP(stbdSamps)+1) = Measurements.AngleUncertainty(stbdPings, 2, stbdSamps);
+        Soundings.SampleRate(stbdPings, 2, RNSSP(stbdSamps)+1) = Measurements.SampleRate(stbdPings, 2, stbdSamps);
    end
 end
 
@@ -611,7 +611,7 @@ beep
 beep
     %disp('Saving All data into mat file')
     %save stbdJSFparsed2_20_22.mat
-    %save portJSFparsed2_20_22.mat
+    save portJSFparsed2_20_22.mat
     %   specify output name
     %OutputFileName = input('Input Output Filename: ', 's');
     %OutputFileName = 'PortTraining_1404_002.csv';
@@ -650,7 +650,7 @@ message = strcat('CSV File Written to:   ',' ', ' "', CSVfilename, '"');
 disp(message);
 msgbox(message);
 
-disp(['Acoustic and Sample Frequency Test:']);
+disp('Acoustic and Sample Frequency Test:');
 disp(['-     Reported Acoustic Start Frequency: ', num2str(ReportedAcousticStartFrequency), ' Hz']);
 disp(['-     Reported Acoustic Stop Frequency: ', num2str(ReportedAcousticStopFrequency), ' Hz']);
 disp(['-     Reported Acoustic Mixer Frequency: ', num2str(ReportedAcousticMixerFrequency), ' Hz']);

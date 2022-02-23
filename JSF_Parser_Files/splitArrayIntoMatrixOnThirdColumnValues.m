@@ -1,9 +1,10 @@
 % splits 2D Matrix into a 3D Matrix based on matching third column values..
 % Adds column into matrix to hold "starting Ping # value
 function output3DMatrix = splitArrayIntoMatrixOnThirdColumnValues(inputArray)
-
+    %sp = shape(inputArray)
+    %disp(['shape inputArray = ', num2str(sp)])
     numPings = max(inputArray(:,3))-min(inputArray(:,3)) + 1;
-    numSamplesPerPing = max(inputArray(:,4));
+    numSamplesPerPing = max(inputArray(:,4))-min(inputArray(:,4))+1;
     % Determine Number of Columns in Output Array
             %       port  stbd    ping# sample# TWTT  InitialPingNumber
     numColumns =    1 +   1 +     1 +   1 +     1 +   1    ;

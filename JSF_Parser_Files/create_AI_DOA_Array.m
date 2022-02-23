@@ -34,16 +34,22 @@ Stbd_DOA_Array = readmatrix(AI_Stbd_DOA_fp);
 %% Combine Port/Stbd Arrays into one array:
 
 % Find num samples per ping.
-numSamplesPerPingPort = max(Port_DOA_Array(:,2));
-numSamplesPerPingStbd = max(Stbd_DOA_Array(:,2));
-if numSamplesPerPingPort ~= numSamplesPerPingStbd
-    msgbox('ERROR: Port & Stbd Files incompatible');
+definingSide = -1;
+numSamplesPerPingPort = max(Port_DOA_Array(:,2))-min(Port_DOA_Array(:,2))+1;
+numSamplesPerPingStbd = max(Stbd_DOA_Array(:,2))-min(Stbd_DOA_Array(:,2))+1;
+if numSamplesPerPingPort > numSamplesPerPingStbd
+    numSamplesPerPing = numSamplesPerPingPort;
+    definingSide = 0;
+    disp('More Port Samples');
+elseif numSamplesPerPingPort < numSamplesPerPingStbd
+    numSamplesPerPing = numSamplesPerPingStbd;
+    definingSide = 1;
+    disp('More Stbd Samples');
 else
     numSamplesPerPing = numSamplesPerPingPort;
-    clear numSamplesPerPingPort
-    clear numSamplesPerPingStbd
+    disp('Equal Port/Stbd Samples');
 end
-
+disp(['numSamplesPerPing = ', num2str(numSamplesPerPing)]);
 
 % Find minimum Ping # and Sample # from both Port/Stbd arrays
 PortMinPingNum = Port_DOA_Array(1,1);
@@ -93,17 +99,17 @@ EndingSampNum = max([PortMaxSampNum, StbdMaxSampNum]);
 % Determine Number of Rows in Output Array
 TotalNumRows = -1;
 if EndingSampNum ~= numSamplesPerPing   
-    msgbox('ERROR: Last Ping has incomplete data!');
-    TotalNumRows = (EndingPingNum-StartingPingNum)*numSamplesPerPing + EndingSampNum;
+    disp('Ping Is Missing Data, Fill in with NANs Later');
+    TotalNumRows = (EndingPingNum-StartingPingNum+1)*numSamplesPerPing ;
 else
-    TotalNumRows = (EndingPingNum-StartingPingNum+1)*numSamplesPerPing;
+    TotalNumRows = (EndingPingNum-StartingPingNum+1)*numSamplesPerPing ;
 end
 if StartingSampNum ~= 1
-    msgbox('ERROR: First Ping has incomplete data!');
-    TotalNumRows = TotalNumRows - StartingSampNum + 1;
+    disp('Ping Is Missing Data in first few samples, Fill in with NANs Later');
+    %TotalNumRows = TotalNumRows - StartingSampNum + 1;
 end
-
-
+disp(['TotalNumRows = ', num2str(TotalNumRows)]);
+%%
 % Determine Number of Columns in Output Array
                 % port  stbd    ping# sample# TWTT
 TotalNumColumns = 1 +   1 +     1 +   1 +     1;
@@ -132,7 +138,7 @@ for r = 1:TotalNumRows
     
     % Determine when to start writing real data
     if  validPortData == 0  % Port Valid Data Test
-        if PortMinPingNum <= currentPingNum && StbdMinSampNum <= currentSampNum && PortMaxSampNum >= currentSampNum && ~portDone
+        if PortMinPingNum <= currentPingNum && PortMinSampNum <= currentSampNum && PortMaxSampNum >= currentSampNum && ~portDone
             validPortData = 1;
         end        
     end
@@ -144,9 +150,9 @@ for r = 1:TotalNumRows
     
     % Write DOA Data, collect TWTT data
     portTWTT = NaN;
-    if validPortData
+    if validPortData && currentSampNum >= PortMinSampNum
         CombinedArray(r,1) = Port_DOA_Array(portCtr, 5);
-        portTWTT = Stbd_DOA_Array(portCtr, 4);
+        portTWTT = Port_DOA_Array(portCtr, 4);
         portCtr = portCtr+1;
         if portCtr > length(Port_DOA_Array)
             validPortData = 0;
@@ -154,7 +160,7 @@ for r = 1:TotalNumRows
         end
     end
     stbdTWTT = NaN;
-    if validStbdData
+    if validStbdData && currentSampNum >= StbdMinSampNum
         CombinedArray(r,2) = Stbd_DOA_Array(stbdCtr, 5);
         stbdTWTT = Stbd_DOA_Array(stbdCtr, 4);
         stbdCtr = stbdCtr+1;
@@ -187,8 +193,8 @@ for r = 1:TotalNumRows
     CombinedArray(r, 5) = TWTT_Data;
     
     % increment the things
-    if numSamplesPerPing == currentSampNum
-        currentSampNum = 1;
+    if EndingSampNum == currentSampNum
+        currentSampNum = StartingSampNum;
         currentPingNum = currentPingNum+1;
     else
         currentSampNum = currentSampNum + 1;

@@ -18,7 +18,11 @@ else
     %PortStbd = 0;   %Port = 0, Stbd = 1;
     FirstPingNum = 87443;
     FinalPingNum = 88723;
-    FirstSampNum = 5;
+    if PortStbd == 0
+        FirstSampNum = 5;
+    else 
+        FirstSampNum = 24;
+    end    
     FinalSampNum = 4301;
     SampsPerPing = FinalSampNum-FirstSampNum+1;
     fprintf("Using Default Values for '0001_1404.002*.jsf' files:\n    FirstPingNum = %d \n    FinalPingNum = %d \n    FirstSampNum = %d \n    FinalSampNum = %d \n    SampsPerPing = %d \n", FirstPingNum, FinalPingNum, FirstSampNum, FinalSampNum, SampsPerPing);
@@ -48,13 +52,13 @@ CSV_Matrix(:, 4) = 0; %SampleTime;
 
 DOA_Vals = nan(SampsPerPing, 1);
 if PortStbd == 0    %port
-    DOA_Vals = linspace(0, -90, SampsPerPing);
+    DOA_Vals = linspace(0, 90, SampsPerPing);
 else                %stbd   
-    DOA_Vals = linspace(-90, 0, SampsPerPing); 
+    DOA_Vals = linspace(90, 0, SampsPerPing); 
 end
 
 
-CSV_Matrix(1+SampsPerPing, 1)
+CSV_Matrix(1+SampsPerPing, 1);
 for i = 1:length(Pings)
     ridx1 = (i-1)*SampsPerPing + 1;
     ridx2 = (i)*SampsPerPing;
@@ -63,7 +67,17 @@ for i = 1:length(Pings)
     CSV_Matrix(ridx1:ridx2, 5) = DOA_Vals;
     
 end
+%colLabels = nan(1,5);
+%colLabels(1,1) = "PingNum";
+%colLabels(1,2) = "SampNum";
+%colLabels(1,3) = "PortStbd";
+%colLabels(1,4) = "TWTT";
+%colLabels(1,5) = "DOAPrediction";
 
-writematrix(CSV_Matrix, outputFP);
+%%
+%CSV_Matrix = cat(1, colLabels, CSV_Matrix);
+ColumnNames = {'PingNum', 'SampNum', 'PortStbd', 'TWTT', 'DOAPrediction'};
+writecell(ColumnNames, outputFP)
+writematrix(CSV_Matrix, outputFP, 'WriteMode', 'append');
 msgbox('Done!');
 %save(outputFP, 'AI_Predicted_DOA_Array');
