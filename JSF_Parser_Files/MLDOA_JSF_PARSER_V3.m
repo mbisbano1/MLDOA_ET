@@ -286,7 +286,7 @@ while ((M_Ctr_Port <= MaxPingCtr) || (M_Ctr_Stbd <= MaxPingCtr))
             
             %StbdAngle(StBathyCtr,1:header.nsamps) =  data.Angle  ;
             %Measurements.MeasurementData(M_Ctr_Stbd, 2, 1:header.nsamps, 3) = -data.Angle ;
-            Measurements.Angle(M_Ctr_Stbd, 2, 1:header.nsamps) = -data.Angle ;  
+            Measurements.Angle(M_Ctr_Stbd, 2, 1:header.nsamps) = data.Angle ;  
             
             %StbdAmp(StBathyCtr,1:header.nsamps) = data.Amp ;
             %Measurements.MeasurementData(M_Ctr_Stbd, 2, 1:header.nsamps, 4) = data.Amp ;

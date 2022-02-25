@@ -177,7 +177,8 @@ while 1==1 && ip < 500
     % check to see if currPing is within bounds of firstPingInAI and
     % lastPingInAI..
     if header.channel == 1
-        posNeg = -1;
+        %posNeg = -1;
+        posNeg = 1;
     elseif header.channel == 0
         posNeg = 1;
     end
