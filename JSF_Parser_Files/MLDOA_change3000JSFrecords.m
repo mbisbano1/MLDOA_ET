@@ -197,6 +197,10 @@ while 1==1 && ip < 500
                                         % replace old DOA with new DOA
                 %data.Angle(lop) = (AnglesArray(lop).*(pi/180));   % bring angle back to JSF scaled format               
                 data.Angle(lop) = ScaledAnglesArray(lop+FirstSampleOffset);
+                data.Filter_flag(lop) = double(cast(0, 'uint8'));   % clear Filter Flag on data (good)
+            else 
+                data.Filter_flag(lop) = double(cast(16, 'uint8'));  % set Filter Flag on data (bad)
+                data.Angle(lop) = nan;
             end            
             fprintf('Ping# %d, Samp# %d, DOA %d \n', currPing, lop, data.Angle(lop));
         end        

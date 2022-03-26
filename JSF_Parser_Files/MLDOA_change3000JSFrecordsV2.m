@@ -1,14 +1,16 @@
 % Script to read a JSF file, modify it, and write results in new file
 
 % current mod: changes the values of the soundings range and angle
+fprintf('\n\n');
 try 
     fclose(infileid) ;
-    fprintf('no in to clear\n');
+    fprintf('in cleared\n');
 catch
     fprintf('no in to clear\n');
 end
 try 
     fclose(outfileid) ;
+    fprintf('out cleared\n');
 catch
     fprintf('no out to clear\n');
 end
@@ -54,7 +56,7 @@ end
 
 infileid = fopen([fpath,filename],'r');
 
-defaultNewFileName = cat(2,filename(1:end-4),'_AI_DOA.jsf');
+defaultNewFileName = cat(2,filename(1:end-4),'_AI_DOAd.jsf');
 [outfile,outpath] = uiputfile(defaultNewFileName, 'Save file in the "JSF_Files/AI_DOA_VALUES" folder');
 %save MLDOAPredictions.mat AI_Predicted_DOA_Array
 outputFP = fullfile(outpath, outfile);
@@ -65,7 +67,7 @@ outfileid = fopen(outputFP, 'wb');
 oldtime = 0 ;
 ip = 0 ;
 
-while 1==1 && ip < 500
+while 1==1 && ip < 1300
   startOfMessage = fread(infileid,1,'int16');
   version = fread(infileid,1,'int8');
   [sessionId,cnt] = fread(infileid,1,'int8');
@@ -147,6 +149,7 @@ while 1==1 && ip < 500
 
     
     %
+    
     % modify values here
     %
     
@@ -162,6 +165,10 @@ while 1==1 && ip < 500
     % write back into JSF:
         % Soundings.Angle(stbdPings, 2, RNSSP(stbdSamps)+1) = Measurements.Angle(stbdPings, 1, stbdSamps).*(180/pi);
     
+    TWTT = header.timeToFirstSample/1e9 + data.DelayIndex * header.timeScaleFactor ;
+    fs = header.fsample;
+    FirstSampleOffset = round(TWTT(1)./(1/fs)) - 1 ;  % EPM
+        
     scaleFactor = header.angleScaleFactor;
     portStbd = header.channel;    
     currPing = header.pingNum;
@@ -169,7 +176,12 @@ while 1==1 && ip < 500
     numSamplesPerPing = header.nsamps;
     % check to see if currPing is within bounds of firstPingInAI and
     % lastPingInAI..
-    
+    if header.channel == 1
+        %posNeg = -1;
+        posNeg = 1;
+    elseif header.channel == 0
+        posNeg = 1;
+    end
     % check twtt scaling.
     %if ((currPing >= firstPingInAI) && (currPing <= lastPingInAI) && ...
     %        (unique(max(AI_Predicted_DOA_Array(:,:,4),[], 2)) <= numSamplesPerPing))
@@ -177,18 +189,35 @@ while 1==1 && ip < 500
         %AnglesArray = NaN(numSamplesPerPing, 1);
         PingArray = PullPingOutOf3DMatrix(AI_Predicted_DOA_Array, currPing);
         AnglesArray = PingArray(:, 1+portStbd);
-        ScaledAnglesArray = -AnglesArray./scaleFactor;
+        ScaledAnglesArray = posNeg.*AnglesArray./scaleFactor;
+        data.samples = round((header.timeToFirstSample/1e9 + data.DelayIndex * header.timeScaleFactor) * header.fsample) ;
         ScaledTypecastAngles = double(cast(ScaledAnglesArray, 'int16'));
-        for lop = 1:numSamplesPerPing
-            if ~isnan(AnglesArray(lop)) % if the AI prediction is not missing,
-                                        % replace old DOA with new DOA
-                %data.Angle(lop) = (AnglesArray(lop).*(pi/180));   % bring angle back to JSF scaled format               
-                data.Angle(lop) = ScaledAnglesArray(lop);
-            end            
-        end        
-        fprintf('Replaced DOA in Ping# %d', currPing);
+
+        for i = 1 : length(ScaledTypecastAngles)
+          if ~isnan(AnglesArray(i))
+            s = find(data.samples == i) ;
+            if ~isempty(s)
+              data.Angle(s(1)) = ScaledAnglesArray(i) ;
+            end
+          end
+        end
+        
+%         for lop = 1:(numSamplesPerPing)
+%             
+%             if ~isnan(AnglesArray(lop+FirstSampleOffset)) % if the AI prediction is not missing,
+%                                         % replace old DOA with new DOA
+%                 %data.Angle(lop) = (AnglesArray(lop).*(pi/180));   % bring angle back to JSF scaled format               
+%                 data.Angle(lop) = ScaledAnglesArray(lop+FirstSampleOffset);
+%             %    data.Filter_flag(lop) = double(cast(0, 'uint8'));   % clear Filter Flag on data (good)
+%             %else 
+%             %    data.Filter_flag(lop) = double(cast(16, 'uint8'));  % set Filter Flag on data (bad)
+%             end            
+%             %fprintf('Ping# %d, Samp# %d, DOA %d \n', currPing, lop, data.Angle(lop));
+%         end   
+        fred = 1 ;
+        %fprintf('Replaced DOA in Ping# %d \n', currPing);
     else
-        fprintf('Not Replacing DOA in Ping# %d', currPing);
+        %fprintf('Not Replacing DOA in Ping# %d \n', currPing);
     end            
     %%% THIS IS THE END OF CODE INSERTED BY MBISBANO
     
@@ -242,7 +271,9 @@ while 1==1 && ip < 500
       fwrite(outfileid,data.Filter_flag(lop)      , 'uint8');
       fwrite(outfileid,data.SNRQUAL(lop)              ,'uint8');
     end
-
+    if header.channel == 1
+      ip = ip + 1 ;
+    end
   else  % not message 3000
     fwrite(outfileid,startOfMessage,'int16');
     fwrite(outfileid,version,'int8');
@@ -261,3 +292,5 @@ end
     % So you don't need to restart MatLab to clear the read/write block
 fclose(infileid) ;
 fclose(outfileid) ;
+fprintf('Done Repacking JSF File\n');
+beep;

@@ -315,9 +315,7 @@ while 1==1
                         otherwise
                             %Read in the junk
                             numSamples = (messageHeader.byteCount - 240)/2;  %bytes - sizeof header by 2
-                            sample_data = fread(fileid,[1,numSamples],'int16');
-                            
-                            
+                            sample_data = fread(fileid,[1,numSamples],'int16');                                                        
                     end
                     if concatChannels
                         data.samples(messageHeader.channel+1,1:length(sample_data)) = sample_data ;   %Store one messageHeader.channel of data

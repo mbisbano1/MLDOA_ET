@@ -35,8 +35,8 @@ Stbd_DOA_Array = readmatrix(AI_Stbd_DOA_fp);
 
 % Find num samples per ping.
 definingSide = -1;
-numSamplesPerPingPort = max(Port_DOA_Array(:,2))-min(Port_DOA_Array(:,2))+1;
-numSamplesPerPingStbd = max(Stbd_DOA_Array(:,2))-min(Stbd_DOA_Array(:,2))+1;
+numSamplesPerPingPort = max(Port_DOA_Array(:,3))-min(Port_DOA_Array(:,3))+1;
+numSamplesPerPingStbd = max(Stbd_DOA_Array(:,3))-min(Stbd_DOA_Array(:,3))+1;
 if numSamplesPerPingPort > numSamplesPerPingStbd
     numSamplesPerPing = numSamplesPerPingPort;
     definingSide = 0;
@@ -52,11 +52,11 @@ end
 disp(['numSamplesPerPing = ', num2str(numSamplesPerPing)]);
 
 % Find minimum Ping # and Sample # from both Port/Stbd arrays
-PortMinPingNum = Port_DOA_Array(1,1);
-StbdMinPingNum = Stbd_DOA_Array(1,1);
+PortMinPingNum = Port_DOA_Array(1,2);
+StbdMinPingNum = Stbd_DOA_Array(1,2);
 
-PortMinSampNum = Port_DOA_Array(1,2);
-StbdMinSampNum = Stbd_DOA_Array(1,2);
+PortMinSampNum = Port_DOA_Array(1,3);
+StbdMinSampNum = Stbd_DOA_Array(1,3);
 firstSide = -1;
 StartingPingNum = -1;
 StartingSampNum = -1;
@@ -87,11 +87,11 @@ else
 end
 % Find maximum Ping # and Sample # from both Port/Stbd arrays
 
-PortMaxPingNum = Port_DOA_Array(end,1);
-StbdMaxPingNum = Stbd_DOA_Array(end,1);
+PortMaxPingNum = Port_DOA_Array(end,2);
+StbdMaxPingNum = Stbd_DOA_Array(end,2);
 
-PortMaxSampNum = Port_DOA_Array(end,2);
-StbdMaxSampNum = Stbd_DOA_Array(end,2);
+PortMaxSampNum = Port_DOA_Array(end,3);
+StbdMaxSampNum = Stbd_DOA_Array(end,3);
 
 EndingPingNum = max([PortMaxPingNum, StbdMaxPingNum]); 
 EndingSampNum = max([PortMaxSampNum, StbdMaxSampNum]);
@@ -151,8 +151,8 @@ for r = 1:TotalNumRows
     % Write DOA Data, collect TWTT data
     portTWTT = NaN;
     if validPortData && currentSampNum >= PortMinSampNum
-        CombinedArray(r,1) = Port_DOA_Array(portCtr, 5);
-        portTWTT = Port_DOA_Array(portCtr, 4);
+        CombinedArray(r,1) = Port_DOA_Array(portCtr, 6);
+        portTWTT = Port_DOA_Array(portCtr, 5);
         portCtr = portCtr+1;
         if portCtr > length(Port_DOA_Array)
             validPortData = 0;
@@ -161,8 +161,8 @@ for r = 1:TotalNumRows
     end
     stbdTWTT = NaN;
     if validStbdData && currentSampNum >= StbdMinSampNum
-        CombinedArray(r,2) = Stbd_DOA_Array(stbdCtr, 5);
-        stbdTWTT = Stbd_DOA_Array(stbdCtr, 4);
+        CombinedArray(r,2) = Stbd_DOA_Array(stbdCtr, 6);
+        stbdTWTT = Stbd_DOA_Array(stbdCtr, 5);
         stbdCtr = stbdCtr+1;
         if stbdCtr > length(Stbd_DOA_Array)
             validStbdData = 0;
