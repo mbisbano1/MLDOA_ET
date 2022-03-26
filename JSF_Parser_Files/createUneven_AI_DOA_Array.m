@@ -9,9 +9,9 @@ clc
 %% Output CSV Importing
     % JSFfpath and CSVfpath are unused in this script.
 
-%[JSFfpath, CSVfpath, AIOUTPUTCSVfpath] = MB_FPATH_SET();
+[JSFfpath, CSVfpath, AIOUTPUTCSVfpath] = MB_FPATH_SET();
 %[JSFfpath, CSVfpath, AIOUTPUTCSVfpath] = RF_FPATH_SET();
-[JSFfpath, CSVfpath, AIOUTPUTCSVfpath] = DL_FPATH_SET();
+%[JSFfpath, CSVfpath, AIOUTPUTCSVfpath] = DL_FPATH_SET();
 
 try
     [AIOutputfilename_port,AIOUTPUTCSVfpath]=uigetfile([AIOUTPUTCSVfpath '/*.csv'], 'Which file to process for Port Side DOA Predictions?'); %open file and assign handle
