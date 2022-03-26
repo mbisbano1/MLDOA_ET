@@ -31,7 +31,8 @@ CSVfileStbd = strcat(CSVfiles{1,1}, '_stbd_new.CSV');
 defaultCSVfilenamePort = fullfile(CSVfpath, CSVfilePort);
 defaultCSVfilenameStbd = fullfile(CSVfpath, CSVfileStbd);
 
-
+[OutputFileNamePort,CSVfpath] = uiputfile(defaultCSVfilenamePort, 'Where to save Port Output CSV?');
+[OutputFileNameStbd,CSVfpath] = uiputfile(defaultCSVfilenameStbd, 'Where to save Stbd Output CSV?');
 
 
 
@@ -421,17 +422,16 @@ rollTime=1;
 SoundTime=1;
 %port_or_stbd = input('Create "port" or "stbd" CSV  ', 's');
 prompt = 'Create port or stbd CSV? Enter p or s:   ';
-port_or_stbd = input(prompt, 's');
+port_or_stbd = 'p';%input(prompt, 's');
 port_stbd_value = -1;
 if isequal(port_or_stbd, 'p')
     port_stbd_value = 0;
 elseif isequal(port_or_stbd, 's')
     port_stbd_value = 1;    
 end 
-MaxPingCtr = 10;
 %for i = 1:length(Pings.PingTimeStamps) % total iterations needed for each ping in a .jsf
 for CurrentPing = 1:MaxPingCtr
-	fprintf('Current Ping = %d\n', CurrentPing);
+	fprintf('CurPing(port) = %d\n', CurrentPing);
     for CurrentSample = 1:Pings.NumSamples(CurrentPing)
      
         OutMat(row,1) = CurrentPing;    % Ping Number Column. Is adjusted directly by MaxPingCtr
@@ -542,62 +542,155 @@ for CurrentPing = 1:MaxPingCtr
 end
 
 %end
-%msgbox('Hey dont forget to change the ping numbers!')
-fprintf('Sonar Data merged into output matrix. \n')
+msgbox('Hey dont forget to change the ping numbers!')
+fprintf('Sonar Data merged into Port output matrix. \n')
 beep
+PortOutMat = OutMat;
+clear OutMat
+OutMat = -69.*ones(888*6508, 32);
 
-%%
+% Bring Formatted Data into OutMat
+row=1; % Instantiation of a row. Keeps track of which row in OutMat the system is currently on
+b=1;
+s=1;
+rollTime=1;
+SoundTime=1;
+%port_or_stbd = input('Create "port" or "stbd" CSV  ', 's');
+prompt = 'Create port or stbd CSV? Enter p or s:   ';
+port_or_stbd = 's';%input(prompt, 's');
+port_stbd_value = -1;
+if isequal(port_or_stbd, 'p')
+    port_stbd_value = 0;
+elseif isequal(port_or_stbd, 's')
+    port_stbd_value = 1;    
+end 
+%for i = 1:length(Pings.PingTimeStamps) % total iterations needed for each ping in a .jsf
+for CurrentPing = 1:MaxPingCtr
+	fprintf('CurPing(stbd) = %d\n', CurrentPing);
+    for CurrentSample = 1:Pings.NumSamples(CurrentPing)
+     
+        OutMat(row,1) = CurrentPing;    % Ping Number Column. Is adjusted directly by MaxPingCtr
+        OutMat(row,1) = Soundings.PingNum(CurrentPing, 1+port_stbd_value);
+        %pNum=pNum+1;
+        
+        OutMat(row,2) = CurrentSample;    % Sample Number Column
+        %sNum=sNum+1;
+        
+        OutMat(row,3) = port_stbd_value;    % Port/Stbd. 0 -> Port, 1 -> Stbd.
+        
+        OutMat(row,4) = SDA(CurrentSample,CurrentPing); % Sample Delay data brought into OutMat
+        %sDelay = sDelay + 1;
+        
+        chanI = 1;   % Variable to keep track of Port side I and Q channel (I)
+        chanQ = 1;   % Variable to keep track of Port side I and Q channel (Q)
+        
+        if isequal(port_or_stbd, 'p')
+            for c=5:24  %Columns for I and Q channel Data
+                if (mod(c,2)==1)  % odd columns recieve the real part of I and Q data (I)
+                    OutMat(row,c) = real(Pings.PortStaveData(CurrentPing,chanI,CurrentSample)); % real I and Q data brought into OutMat
+                    chanI = chanI + 1;
+                else             % even columns receive the imaginary part of I and Q Data (Q)
+                    OutMat(row,c) = imag(Pings.PortStaveData(CurrentPing,chanQ,CurrentSample)); % Imaginary I and Q data brought into OutMat
+                    chanQ = chanQ + 1;
+                end               
+            end        
+        elseif isequal(port_or_stbd, 's')
+            for c=5:24  %Columns for I and Q channel Data
+                if (mod(c,2)==1)  % odd columns recieve the real part of I and Q data (I)
+                    OutMat(row,c) = real(Pings.StbdStaveData(CurrentPing,chanI,CurrentSample)); % real I and Q data brought into OutMat
+                    chanI = chanI + 1;
+                else             % even columns receive the imaginary part of I and Q Data (Q)
+                    OutMat(row,c) = imag(Pings.StbdStaveData(CurrentPing,chanQ,CurrentSample)); % Imaginary I and Q data brought into OutMat
+                    chanQ = chanQ + 1;
+                end               
+            end
+        end
+        
+        % Next bit is for Roll and Sound Speed Column
+        NumSecondsThisPing = POSIX1970_TO_DAY(Pings.PingTimeStamps(CurrentPing));
+        tsr = NumSecondsThisPing:1/fs:(NumSecondsThisPing +((Pings.NumSamples(CurrentPing)-1)/fs));    % Row array of time stamps for each ping
+        
+        %tsr = Pings.PingTimeStamps(CurrentPing):1/fs:(Pings.PingTimeStamps(CurrentPing) + ((Pings.NumSamples(CurrentPing)-1)/fs));    % Row array of time stamps for each ping
+        
+        TSA = tsr' ;            % Row array is converted to column array for easy comparison between time stamps of roll and sound speed
+        
+        % Roll
+        NumSecondsRolls = POSIX1970_TO_DAY(Rolls(b, 1));
+        NumSecondsNextRolls = POSIX1970_TO_DAY(Rolls(b+1, 1));
+        %if ((TSA(CurrentSample,1)>= Rolls(b,1))&&(TSA(CurrentSample,1) < Rolls(b+1, 1)))                 % If Ping Time Stamp is less than that of the current roll time
+        if ((TSA(CurrentSample,1)>= NumSecondsRolls)&&(TSA(CurrentSample,1) < NumSecondsNextRolls))                 % If Ping Time Stamp is less than that of the current roll time
+            OutMat(row,25) = Rolls(b,2);                % That current roll data is sent to that row of OutMat
+        
+        elseif (TSA(CurrentSample,1) < NumSecondsRolls)
+            OutMat(row,25) = NaN ;
+            
+        else                % ELSE 
+            b=b+1;                 % increase roll row by 1   
+            if  b>RollCnt-1     % check if row does not excede valid data
+                b=RollCnt-1;
+            end
+            OutMat(row,25) = Rolls(b, 2); %Rolls(b,2);  % New role data is sent to that current row of OutMat
+               
+        end
+        
+        % Sound Speed
+        NumSecondsSoundSpeeds = POSIX1970_TO_DAY(SoundSpeeds(s,1));
+        NumSecondsNextSoundSpeeds = POSIX1970_TO_DAY(SoundSpeeds(s+1,1));
+        %if ((TSA(CurrentSample,1)>= SoundSpeeds(s,1)&&(TSA(CurrentSample,1) < SoundSpeeds(s+1, 1))))      % same exact structure as Roll column
+        if ((TSA(CurrentSample,1)>= NumSecondsSoundSpeeds&&(TSA(CurrentSample,1) < NumSecondsNextSoundSpeeds)))      % same exact structure as Roll column
+            OutMat(row,26) = SoundSpeeds(s,2);
+        elseif (TSA(CurrentSample,1) < NumSecondsSoundSpeeds)
+            OutMat(row,26) = NaN ;
+        else
+            s=s+1;
+            if  s>SoundCnt-1
+                s=SoundCnt-1;
+            end
+            OutMat(row,26) = SoundSpeeds(s,2);
+               
+        end
+        msg3000portstbd = -1;
+        if isequal(port_or_stbd, 'p')
+            msg3000portstbd = 1;
+        elseif isequal(port_or_stbd, 's')
+            msg3000portstbd = 2;
+        end
+        % DOA: col 27 (Should be 28 but Ryan is strange)
+        OutMat(row, 27) = Soundings.Angle(CurrentPing, msg3000portstbd, CurrentSample);
+        % TWTT: col 28
+        OutMat(row, 28) = Soundings.TWTT(CurrentPing, msg3000portstbd, CurrentSample);
+        % Amplitude : col 29
+        OutMat(row, 29) = Soundings.Amplitude(CurrentPing, msg3000portstbd, CurrentSample);
+        % angle uncertainty : col 30
+        OutMat(row, 30) = Soundings.AngleUncertainty(CurrentPing, msg3000portstbd, CurrentSample);
+        % sample rate : col 31
+        OutMat(row, 31) = Soundings.SampleRate(CurrentPing, msg3000portstbd, CurrentSample);
+        % range : col 32        
+        %Range is the Speed of sound (col 26) * TWTT/2
+        OutMat(row, 32) = OutMat(row, 26).*(Soundings.TWTT(CurrentPing, msg3000portstbd, CurrentSample)./2);
+        
+        
+        
+        
+        row=row+1;
+    end
+end
+StbdOutMat = OutMat;
+clear OutMat;
+fprintf('Sonar Data merged into Stbd output matrix. \n')
+%
 % Port OutMat removing samples with missing sounding information:
     % find all rows with missing DOA.
     % These next 3 lines are the old (flawed) method of doing this.
     
-    NewOutMat = OutMat;
-    RowIndexMissingDOA(:, 1) = isnan(NewOutMat(:,27)) ;
-    NewOutMat(RowIndexMissingDOA==1, :) = [];
-%%
-    % This is the improved method of removing missing rows (in consistent
-    % manner) - MBisbano 2/20/22. Overall adds maybe 5 secs to code, nbd.
+    NewOutMatPort = PortOutMat;
+    RowIndexMissingDOAPort(:, 1) = isnan(NewOutMatPort(:,27)) ;
+    NewOutMatPort(RowIndexMissingDOAPort==1, :) = [];
     
-    %%% Manually specify the first sample number
-    forcedFirstSampleNumber = input('Enter the first valid sample number: (-1 for not specified)\n <');     %24;
-    %%%
-    
-    
-    minSampleNumberForContiguousData = nan(MaxPingCtr, 1);
-    maxSampleNumberForContiguousData = nan(MaxPingCtr, 1);
-    for gru = 1:MaxPingCtr
-        %first sample row
-        fsr = SamplesPerPing*(gru-1)+1;
-        %last samples row
-        lsr = SamplesPerPing*(gru);
-        %mid samples row
-        msr = ceil((fsr+lsr)/2);
-        subsetSamples = OutMat(fsr:msr, 27);
-        %found row, found col
-        [fr, fc] = find(isnan(subsetSamples(:)), 1, 'last');
-        %minSampleNumberForContiguousData(gru) = fsr+fr-1; 
-        minSampleNumberForContiguousData(gru) = fr+1; 
-        
-        msrSampleNum = msr-fsr+1;
-        
-        subsetSamples = OutMat(msr:lsr, 27);
-        [fr, fc] = find(isnan(subsetSamples(:)), 1, 'first');
-        maxSampleNumberForContiguousData(gru) = msrSampleNum + fr-2; 
-    end
-    
-    minimumUsableSampleNumber = max(minSampleNumberForContiguousData);
-    maximumUsableSampleNumber = min(maxSampleNumberForContiguousData);
-    
-    if forcedFirstSampleNumber > minimumUsableSampleNumber
-        minimumUsableSampleNumber = forcedFirstSampleNumber;
-    end    
-    NewOutMat = OutMat;
-    NewOutMat(NewOutMat(:,2) < minimumUsableSampleNumber, :) = [];
-    NewOutMat(NewOutMat(:,2) > maximumUsableSampleNumber, :) = [];
-    
-    %min(NewOutMat(:,2))
+    NewOutMatStbd = StbdOutMat;
+    RowIndexMissingDOAStbd(:, 1) = isnan(NewOutMatStbd(:,27)) ;
+    NewOutMatStbd(RowIndexMissingDOAStbd==1, :) = [];
 
-    beep
 %%
 % OutMat removing samples with missing roll or soundspeed info:
     % The next 6 lines are the old (potentially flawed) way of testing this:
@@ -610,86 +703,43 @@ beep
     %end
     
     % This is the new solution using find() - MBisbano, 2/20/22
-    [firstGoodRow, necColParam] = find((NewOutMat(:,2)==minimumUsableSampleNumber)&(~isnan(NewOutMat(:,26))), 1, 'first');   
-    FinalOutMat = NewOutMat(firstGoodRow:length(NewOutMat), :);
+    %[firstGoodRow, necColParam] = find((NewOutMat(:,2)==minimumUsableSampleNumber)&(~isnan(NewOutMat(:,26))), 1, 'first');   
+    %FinalOutMat = NewOutMat(firstGoodRow:length(NewOutMat), :);
 %%    
 % find all rows with missing data
-    RowIndexMissingData = [];
-    FinalOutMat = NewOutMat;
-    RowIndexMissingData(:, 1) = (isnan(FinalOutMat(:,25)) | isnan(FinalOutMat(:, 26)));
-    
-    %for r = length(RowIndexMissingData):-1:1
-    for r = 32000:-1:1          %start at 32000 to save a crap tonne of time
-        if(RowIndexMissingData(r,1)==1)
-            %fprintf('removed row\n');
-            FinalOutMat(1:r,:) = [];
-            break;
-        end
-    end
-beep
-% Histogram of FinalOutMat Sample Numbers!
-    % This is unneccessary but useful for testing things:
- %[testN, testEdges] = histcounts(FinalOutMat(:,2), 4301-19+2);
-
-%% Throw out Windowed avg DOA's above 75 degrees in NR:
-
-UsefulMatrix = FinalOutMat(:,[1,2,27]);
-PingNumInc = UsefulMatrix(1,1);
-LastPingNumInc = UsefulMatrix(end,1);
-
-averagingWindowSize = 21;
-MaxDOAAngle = 75;
-rowIndex = 1;
-FilteredOutMat = [];
-while PingNumInc <= LastPingNumInc
-    [frow, fcol] = find(UsefulMatrix(:,1)==PingNumInc, 1,'first');
-    firstRowInPing = frow;
-    [frow, fcol] = find(UsefulMatrix(:,1)==PingNumInc, 1,'last');
-    lastRowInPing = frow;
-    
-    doaVectorInPing = UsefulMatrix(firstRowInPing:lastRowInPing, 3);
-    avgDOAinPing = movmean(doaVectorInPing, averagingWindowSize);
-    
-    [frow, fcol] = find(avgDOAinPing < 55, 1,'first');
-    %lowDOArowInPing = frow;
-    if isnan(frow)
-        lowDOArowInPing = firstRowInPing;
-    else 
-        lowDOArowInPing = firstRowInPing+frow-1;
-    end
-    
-    
-    [frow, fcol] = find(avgDOAinPing < MaxDOAAngle, 1,'last');
-    if isnan(frow)
-        badDOArowIndex = lastRowInPing+1;
-        fprintf('isnan lol\n');
-    else
-        badDOArowIndex = firstRowInPing+frow-1;
-    end
-    FilteredOutMat = cat( 1,FilteredOutMat, FinalOutMat(lowDOArowInPing:badDOArowIndex-1, :));
-    
-    PingNumInc = PingNumInc + 1;
-end
-
+    RowIndexMissingDataPort = [];
+    FinalOutMatPort = NewOutMatPort;
+    RowIndexMissingDataPort(:, 1) = (isnan(FinalOutMatPort(:,25)) | isnan(FinalOutMatPort(:, 26)));
+    [frow, fcol] = find(RowIndexMissingDataPort(:,1) == 1, 1, 'last');
+    FinalOutMatPort(1:frow, :) = [];
+%    
+    RowIndexMissingDataStbd = [];
+    FinalOutMatStbd = NewOutMatStbd;
+    RowIndexMissingDataStbd(:, 1) = (isnan(FinalOutMatStbd(:,25)) | isnan(FinalOutMatStbd(:, 26)));
+    [frow, fcol] = find(RowIndexMissingDataStbd(:,1) == 1, 1, 'last');
+    FinalOutMatStbd(1:frow, :) = [];
+%%
 % Write Output CSV File
-%% Output Management
-beep
+% Output Management
+
     %disp('Saving All data into mat file')
     %save stbdJSFparsed2_20_22.mat
-    save stbdJSF002NRparsed3_19_22.mat
+    save JSF038_cleaned_parsed3_26_22.mat
     %   specify output name
     %OutputFileName = input('Input Output Filename: ', 's');
     %OutputFileName = 'PortTraining_1404_002.csv';
     %OutputFileName = 'StbdTesting_1404_002.csv';
     %defaultNewFileName = cat(2,filename(1:end-4),'_AI_DOA.jsf');
     %
-    [OutputFileName,CSVfpath] = uiputfile(defaultCSVfilenamePort, 'Where to save Output CSV?');
+
     %save MLDOAPredictions.mat AI_Predicted_DOA_Array
     %outputFP = fullfile(outpath, outfile);
     %outfileid = fopen(outputFP, 'wb');
+    [OutputFileNamePort,CSVfpath] = uiputfile(defaultCSVfilenamePort, 'Where to save Port Output CSV?');
+    [OutputFileNameStbd,CSVfpath] = uiputfile(defaultCSVfilenameStbd, 'Where to save Stbd Output CSV?');
     
-    
-    CSVfilename = fullfile(CSVfpath, OutputFileName);
+    CSVPortfilename = fullfile(CSVfpath, OutputFileNamePort);
+    CSVStbdfilename = fullfile(CSVfpath, OutputFileNameStbd);
 
 
 %msgbox('Done.') ;
@@ -709,12 +759,18 @@ ColumnNames = {'PingNum', 'SampleNum', 'PortStbd', 'SampleTimeDelay', ...
 %        'I5', 'Q5', 'I6', 'Q6', 'I7', 'Q7', 'I8', 'Q8',...
 %        'I9', 'Q9', 'I10', 'Q10', 'Roll', 'C', ...
 %        'DOA', 'TWTT', 'Amplitude', 'AngleUncertainty', 'SampleRate', 'Range'};
-writecell(ColumnNames, CSVfilename)
+writecell(ColumnNames, CSVPortfilename)
 %writematrix(FinalOutMat, CSVfilename, 'WriteMode', 'append');
-writematrix(FilteredOutMat, CSVfilename, 'WriteMode', 'append');
-message = strcat('CSV File Written to:   ',' ', ' "', CSVfilename, '"');
+writematrix(FinalOutMatPort, CSVPortfilename, 'WriteMode', 'append');
+message = strcat('Port CSV File Written to:   ',' ', ' "', CSVPortfilename, '"');
 disp(message);
-msgbox(message);
+
+writecell(ColumnNames, CSVStbdfilename)
+%writematrix(FinalOutMat, CSVfilename, 'WriteMode', 'append');
+writematrix(FinalOutMatStbd, CSVStbdfilename, 'WriteMode', 'append');
+message = strcat('Stbd CSV File Written to:   ',' ', ' "', CSVStbdfilename, '"');
+disp(message);
+%msgbox(message);
 
 disp('Acoustic and Sample Frequency Test:');
 disp(['-     Reported Acoustic Start Frequency: ', num2str(ReportedAcousticStartFrequency), ' Hz']);
