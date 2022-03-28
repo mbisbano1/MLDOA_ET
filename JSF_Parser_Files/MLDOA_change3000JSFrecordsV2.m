@@ -292,5 +292,9 @@ end
     % So you don't need to restart MatLab to clear the read/write block
 fclose(infileid) ;
 fclose(outfileid) ;
+%
 fprintf('Done Repacking JSF File\n');
+fprintf('Wrote to: ');
+fprintf(outfile);
+fprintf('\n');
 beep;

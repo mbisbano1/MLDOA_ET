@@ -39,8 +39,8 @@ defaultCSVfilenameStbd = fullfile(CSVfpath, CSVfileStbd);
 beep
 %% Output File Matrix setup
 
-	%OutMat = -69.*ones(1287*4340, 32);
-    OutMat = -69.*ones(888*6508, 32);
+	OutMat = -69.*ones(1287*4340, 32);
+    %OutMat = -69.*ones(888*6508, 32);
 	%OutMat = -69.*ones(11*4340, 32);
 	
 %% Acoustic Frequency and Sample Frequency Test setup:
@@ -78,12 +78,12 @@ beep
 
 % User defineable parameters
 
-    %SamplesPerPing = 4340 ;     % 4340 samples per ping (IN FIRST TEST FILE)
-    SamplesPerPing = 6508 ; 
+    SamplesPerPing = 4340 ;     % 4340 samples per ping (IN FIRST TEST FILE)
+    %SamplesPerPing = 6508 ; 
     PingCtr = 1 ;
     %MaxPingCtr = 10 ;
-    %MaxPingCtr = 1287 ;
-    MaxPingCtr = 888 ;
+    MaxPingCtr = 1287 ;
+    %MaxPingCtr = 888 ;
     NumChannelsPerSample = 20 ; %[1,2, ... 10] Port ||| [11, 12, ... 20] Stbd
                                     % 1 and 11 being the closest to seabed
 
@@ -712,19 +712,20 @@ fprintf('Sonar Data merged into Stbd output matrix. \n')
     RowIndexMissingDataPort(:, 1) = (isnan(FinalOutMatPort(:,25)) | isnan(FinalOutMatPort(:, 26)));
     [frow, fcol] = find(RowIndexMissingDataPort(:,1) == 1, 1, 'last');
     FinalOutMatPort(1:frow, :) = [];
-%    
+%%    
     RowIndexMissingDataStbd = [];
     FinalOutMatStbd = NewOutMatStbd;
     RowIndexMissingDataStbd(:, 1) = (isnan(FinalOutMatStbd(:,25)) | isnan(FinalOutMatStbd(:, 26)));
     [frow, fcol] = find(RowIndexMissingDataStbd(:,1) == 1, 1, 'last');
     FinalOutMatStbd(1:frow, :) = [];
+    
 %%
 % Write Output CSV File
 % Output Management
 
     %disp('Saving All data into mat file')
     %save stbdJSFparsed2_20_22.mat
-    save JSF038_cleaned_parsed3_26_22.mat
+    save JSF002_cleaned_parsed3_26_22.mat
     %   specify output name
     %OutputFileName = input('Input Output Filename: ', 's');
     %OutputFileName = 'PortTraining_1404_002.csv';
@@ -735,8 +736,7 @@ fprintf('Sonar Data merged into Stbd output matrix. \n')
     %save MLDOAPredictions.mat AI_Predicted_DOA_Array
     %outputFP = fullfile(outpath, outfile);
     %outfileid = fopen(outputFP, 'wb');
-    [OutputFileNamePort,CSVfpath] = uiputfile(defaultCSVfilenamePort, 'Where to save Port Output CSV?');
-    [OutputFileNameStbd,CSVfpath] = uiputfile(defaultCSVfilenameStbd, 'Where to save Stbd Output CSV?');
+
     
     CSVPortfilename = fullfile(CSVfpath, OutputFileNamePort);
     CSVStbdfilename = fullfile(CSVfpath, OutputFileNameStbd);
@@ -764,7 +764,14 @@ writecell(ColumnNames, CSVPortfilename)
 writematrix(FinalOutMatPort, CSVPortfilename, 'WriteMode', 'append');
 message = strcat('Port CSV File Written to:   ',' ', ' "', CSVPortfilename, '"');
 disp(message);
-
+%%
+ColumnNames = {'PingNum', 'SampleNum', 'PortStbd', 'SampleTimeDelay', ...
+        'I1','Q1', 'I2', 'Q2', 'I3', 'Q3', 'I4', 'Q4',...
+        'I5', 'Q5', 'I6', 'Q6', 'I7', 'Q7', 'I8', 'Q8',...
+        'I9', 'Q9', 'I10', 'Q10', 'Roll', 'C', ...
+        'DOA', 'TWTT', 'Amplitude', 'AngleUncertainty', 'SampleRate', 'Range'};
+OutputFileNameStbd = '0001_1404.038_stbd_FinalCleaned_RollReady.CSV';
+CSVStbdfilename = fullfile(CSVfpath, OutputFileNameStbd);
 writecell(ColumnNames, CSVStbdfilename)
 %writematrix(FinalOutMat, CSVfilename, 'WriteMode', 'append');
 writematrix(FinalOutMatStbd, CSVStbdfilename, 'WriteMode', 'append');
