@@ -83,6 +83,7 @@ beep
     PingCtr = 1 ;
     %MaxPingCtr = 10 ;
     MaxPingCtr = 1287 ;
+    %MaxPingCtr = 3000 ;
     %MaxPingCtr = 888 ;
     NumChannelsPerSample = 20 ; %[1,2, ... 10] Port ||| [11, 12, ... 20] Stbd
                                     % 1 and 11 being the closest to seabed
@@ -725,7 +726,7 @@ fprintf('Sonar Data merged into Stbd output matrix. \n')
 
     %disp('Saving All data into mat file')
     %save stbdJSFparsed2_20_22.mat
-    save JSF002_cleaned_parsed3_26_22.mat
+    save JSF006_cleaned_parsed3_28_22.mat
     %   specify output name
     %OutputFileName = input('Input Output Filename: ', 's');
     %OutputFileName = 'PortTraining_1404_002.csv';
