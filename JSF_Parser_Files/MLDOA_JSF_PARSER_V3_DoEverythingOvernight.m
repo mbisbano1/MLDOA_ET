@@ -37,13 +37,14 @@ defaultCSVfilenameStbd = fullfile(CSVfpath, CSVfileStbd);
 
 
 beep
-%% Output File Matrix setup
+% Output File Matrix setup
 
 	OutMat = -69.*ones(1287*4340, 32);
     %OutMat = -69.*ones(888*6508, 32);
+    %OutMat = -69.*ones(3484*6508, 32);
 	%OutMat = -69.*ones(11*4340, 32);
 	
-%% Acoustic Frequency and Sample Frequency Test setup:
+% Acoustic Frequency and Sample Frequency Test setup:
     ReportedAcousticStartFrequency = nan;
     ReportedAcousticStopFrequency = nan;
     ReportedAcousticMixerFrequency = nan;
@@ -51,16 +52,16 @@ beep
     ReportedSampleFrequency = nan;
     
     
-%% Message 2020 Data:
+% Message 2020 Data:
 
 % Create Rolls Matrix, which holds every Roll measurement and timestamp;
 % User defineable parameters
     RollCnt = 1 ;
 % Initialize Message 2020 Rolls() elements for efficiency
-    Rolls = NaN(20000, 2) ;
+    Rolls = NaN(30000, 2) ;
 	
 	
-%% Message 2060 Data:
+% Message 2060 Data:
 % Create SoundSpeeds Matrix, which holds every speed of sound measurement and
 % timestamp;
 
@@ -78,11 +79,15 @@ beep
 
 % User defineable parameters
 
-    SamplesPerPing = 4340 ;     % 4340 samples per ping (IN FIRST TEST FILE)
-    %SamplesPerPing = 6508 ; 
+    %SamplesPerPing = 4340 ;     % 4340 samples per ping (IN FIRST TEST FILE)
+    SamplesPerPing = 6508 ; 
     PingCtr = 1 ;
     %MaxPingCtr = 10 ;
-    MaxPingCtr = 1287 ;
+    %MaxPingCtr = 1287 ;
+    MaxPingCtr = 3484;
+    minPingNum = 9999999999999999;
+    maxPingNum = 0;
+    maxStaveSamplesPerPing = 0;
     %MaxPingCtr = 3000 ;
     %MaxPingCtr = 888 ;
     NumChannelsPerSample = 20 ; %[1,2, ... 10] Port ||| [11, 12, ... 20] Stbd
@@ -125,8 +130,15 @@ while PingCtr <= MaxPingCtr
             Pings.NumSamples(PingCtr, 1) = header.samples ;
             Pings.PingTimeStamps(PingCtr, 1) = header.timeStamp ;
             
-            
-            
+            if minPingNum > header.pingNum
+               minPingNum = header.pingNum;
+            end
+            if maxPingNum < header.pingNum
+                maxPingNum = header.pingNum;
+            end
+            if maxStaveSamplesPerPing < header.samples
+                maxStaveSamplesPerPing = header.samples;
+            end
             df = header.dataFormat ;
             fs = header.fs;
             if df == 2
@@ -174,7 +186,10 @@ while PingCtr <= MaxPingCtr
 end
 beep
 fprintf('\nStave Data Processed\n')
-
+%
+disp(['Min/Max ping numbers: ', num2str(minPingNum), '/', num2str(maxPingNum)])
+disp(['Total Number of Pings: ', num2str(maxPingNum-minPingNum+1)])
+disp(['Number Samples Per Ping: ', num2str(maxStaveSamplesPerPing)])
 %% Extract Message 3000 Data:
 % Create Measurements Structure, which holds each measurement and its corresponding data.
 
@@ -547,9 +562,13 @@ msgbox('Hey dont forget to change the ping numbers!')
 fprintf('Sonar Data merged into Port output matrix. \n')
 beep
 PortOutMat = OutMat;
+%%
 clear OutMat
-OutMat = -69.*ones(888*6508, 32);
 
+OutMat = -69.*ones(1287*4340, 32);
+%OutMat = -69.*ones(888*6508, 32);
+%OutMat = -69.*ones(3484*6508, 32);
+%OutMat = -69.*ones(11*4340, 32);
 % Bring Formatted Data into OutMat
 row=1; % Instantiation of a row. Keeps track of which row in OutMat the system is currently on
 b=1;
@@ -726,7 +745,7 @@ fprintf('Sonar Data merged into Stbd output matrix. \n')
 
     %disp('Saving All data into mat file')
     %save stbdJSFparsed2_20_22.mat
-    save JSF006_cleaned_parsed3_28_22.mat
+    save JSF0005_1217_cleaned_parsed4_12_22.mat
     %   specify output name
     %OutputFileName = input('Input Output Filename: ', 's');
     %OutputFileName = 'PortTraining_1404_002.csv';
@@ -771,7 +790,7 @@ ColumnNames = {'PingNum', 'SampleNum', 'PortStbd', 'SampleTimeDelay', ...
         'I5', 'Q5', 'I6', 'Q6', 'I7', 'Q7', 'I8', 'Q8',...
         'I9', 'Q9', 'I10', 'Q10', 'Roll', 'C', ...
         'DOA', 'TWTT', 'Amplitude', 'AngleUncertainty', 'SampleRate', 'Range'};
-OutputFileNameStbd = '0001_1404.038_stbd_FinalCleaned_RollReady.CSV';
+%OutputFileNameStbd = '0001_1404.038_stbd_FinalCleaned_RollReady.CSV';
 CSVStbdfilename = fullfile(CSVfpath, OutputFileNameStbd);
 writecell(ColumnNames, CSVStbdfilename)
 %writematrix(FinalOutMat, CSVfilename, 'WriteMode', 'append');
