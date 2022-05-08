@@ -1,6 +1,7 @@
 % Script to read a JSF file, modify it, and write results in new file
-
 % current mod: changes the values of the soundings range and angle
+
+%% Flush out open files..
 fprintf('\n\n');
 try 
     fclose(infileid) ;
@@ -14,7 +15,7 @@ try
 catch
     fprintf('no out to clear\n');
 end
-%%
+%% Input mat file with new DOA values
 clear
 %msgbox('Load your AI_Predicted_DOA_Array variable into workspace before starting')
 
@@ -48,6 +49,7 @@ catch
   lastJSFdir = './' ;
 end
 
+%% Load JSF File to modify
 % Load file to process..
 [filename,fpath]=uigetfile([fpath '*.jsf'], 'Which file to process?'); %open file and assign handle
 if fpath ~= 0
@@ -63,11 +65,12 @@ outputFP = fullfile(outpath, outfile);
 outfileid = fopen(outputFP, 'wb');
 %save(outputFP, 'AI_Predicted_DOA_Array');
 %outfileid = fopen([fpath,filename(1:end-4) '_fixed.jsf'],'wb');
-%%
+%% Modify the JSF File and Close when Done..
 oldtime = 0 ;
 ip = 0 ;
 
-while 1==1 && ip < 1300
+% essentially loop until EOF..
+while 1==1 && ip < 2000
   startOfMessage = fread(infileid,1,'int16');
   version = fread(infileid,1,'int8');
   [sessionId,cnt] = fread(infileid,1,'int8');

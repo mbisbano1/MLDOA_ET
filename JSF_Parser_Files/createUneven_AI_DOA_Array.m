@@ -2,7 +2,7 @@ clear all
 close all
 clc
 
-% This code is designed to take in a CSV of data output by MLDOA, 
+% This code is designed to take in a CSV of data output by Python MLDOA, 
 % primarily the DOA outputs accompanied by Ping Number, Sample Number, 
 % Sample Time Delay, and Port/Stbd flag.
 
@@ -13,6 +13,7 @@ clc
 %[JSFfpath, CSVfpath, AIOUTPUTCSVfpath] = RF_FPATH_SET();
 %[JSFfpath, CSVfpath, AIOUTPUTCSVfpath] = DL_FPATH_SET();
 
+% Specify port side MLDOA CSV Output
 try
     [AIOutputfilename_port,AIOUTPUTCSVfpath]=uigetfile([AIOUTPUTCSVfpath '/*.csv'], 'Which file to process for Port Side DOA Predictions?'); %open file and assign handle
 catch
@@ -21,6 +22,7 @@ end
 AI_Port_DOA_fp = fullfile(AIOUTPUTCSVfpath, AIOutputfilename_port);
 %AI_Port_DOA_fp = fopen([AIOutputfilename_port,AIOUTPUTCSVfpath],'r');
 
+% Specify stbdside MLDOA CSV Output
 try
     [AIOutputfilename_stbd,AIOUTPUTCSVfpath]=uigetfile([AIOUTPUTCSVfpath '/*.csv'], 'Which file to process for Starboard Side DOA Predictions?'); %open file and assign handle
 catch
@@ -100,20 +102,14 @@ for i = 1:numPings
     fprintf('Ping Index: %d \n', i);
     
 end
-%%
-% if TWTT_Mat(:,:,1) == TWTT_Mat(:,:,2)
-%     fprintf("TWTT's Synchronize between Port and Starboard \n\n");
-%     output3DMatrix(:,:,5) = TWTT_Mat(:,:,1);
-% end
-%filledPort_DOA_Array = NaN(maximumPortSampleNumber*numPortPings, 6);
-%filledStbd_DOA_Array = NaN(maximumStbdSampleNumber*numStbdPings, 6);
-
-
-AI_Predicted_DOA_Array = output3DMatrix;
+%% Rename Output Array
+    AI_Predicted_DOA_Array = output3DMatrix;
 
 %% Save Outputs to .mat file to make life easier:
-%msgbox('Job Done!');
-[file,path] = uiputfile('MLDOAPredictions1.mat', 'Save file in the AIOutput_CSV_Files folder');
-%save MLDOAPredictions.mat AI_Predicted_DOA_Array
-outputFP = fullfile(path, file);
-save(outputFP, 'AI_Predicted_DOA_Array');
+    %msgbox('Job Done!');
+    [file,path] = uiputfile('MLDOAPredictions1.mat', 'Save file in the AIOutput_CSV_Files folder');
+    %save MLDOAPredictions.mat AI_Predicted_DOA_Array
+    outputFP = fullfile(path, file);
+    save(outputFP, 'AI_Predicted_DOA_Array');
+%%
+disp('Open this mat file in "MLDOA_change3000JSFrecordsV2.m"')
